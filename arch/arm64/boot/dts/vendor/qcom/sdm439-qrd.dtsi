@@ -1,5 +1,6 @@
 #include "msm8937-mdss-panels.dtsi"
-#include "sdm439-camera-sensor-qrd.dtsi"
+//#include "sdm439-camera-sensor-qrd.dtsi"
+#include <dt-bindings/clock/qcom,rpmcc.h>
 
 &blsp1_uart2 {
 	status = "ok";
