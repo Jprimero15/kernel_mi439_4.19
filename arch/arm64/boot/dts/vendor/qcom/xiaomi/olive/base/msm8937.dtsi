@@ -1,0 +1,9 @@
+/ {
+	aliases {
+		/delete-property/ i2c4;
+	};
+};
+
+&soc {
+	/delete-node/ i2c@78b8000;
+};
