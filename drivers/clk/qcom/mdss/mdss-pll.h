@@ -251,6 +251,10 @@ static inline int mdss_get_mux_sel(void *context, unsigned int reg,
 	return 0;
 }
 
+#ifdef CONFIG_MACH_XIAOMI_SDM439
+extern char *saved_command_line;
+#endif
+
 int mdss_pll_resource_enable(struct mdss_pll_resources *pll_res, bool enable);
 int mdss_pll_util_resource_init(struct platform_device *pdev,
 					struct mdss_pll_resources *pll_res);
