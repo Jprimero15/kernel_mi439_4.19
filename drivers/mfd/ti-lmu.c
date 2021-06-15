@@ -34,6 +34,10 @@ static int ti_lmu_enable_hw(struct ti_lmu *lmu, enum ti_lmu_id id)
 {
 	int ret;
 
+#ifdef CONFIG_MACH_XIAOMI_SDM439
+	pr_err("[bkl] %s enter\n", __func__);
+#endif
+
 	if (gpio_is_valid(lmu->en_gpio)) {
 		ret = devm_gpio_request_one(lmu->dev, lmu->en_gpio,
 					    GPIOF_OUT_INIT_HIGH, "lmu_hwen");
@@ -53,6 +57,10 @@ static int ti_lmu_enable_hw(struct ti_lmu *lmu, enum ti_lmu_id id)
 					  LM3631_LCD_EN_MASK,
 					  LM3631_LCD_EN_MASK);
 	}
+
+#ifdef CONFIG_MACH_XIAOMI_SDM439
+	pr_err("[bkl] %s finish\n", __func__);
+#endif
 
 	return 0;
 }
@@ -77,6 +85,28 @@ static struct mfd_cell lm3532_devices[] = {
 	.id            = _id,			\
 	.of_compatible = "ti,lm363x-regulator",	\
 }						\
+
+static struct mfd_cell lm36272_devices[] = {
+	LM363X_REGULATOR(LM3627X_BOOST),
+	LM363X_REGULATOR(LM3627X_LDO_POS),
+	LM363X_REGULATOR(LM3627X_LDO_NEG),
+	{
+		.name          = "ti-lmu-backlight",
+		.id            = LM36272,
+		.of_compatible = "ti,lm36272-backlight",
+	},
+};
+
+static struct mfd_cell lm36274_devices[] = {
+	LM363X_REGULATOR(LM3627X_BOOST),
+	LM363X_REGULATOR(LM3627X_LDO_POS),
+	LM363X_REGULATOR(LM3627X_LDO_NEG),
+	{
+		.name          = "ti-lmu-backlight",
+		.id            = LM36274,
+		.of_compatible = "ti,lm36274-backlight",
+	},
+};
 
 static struct mfd_cell lm3631_devices[] = {
 	LM363X_REGULATOR(LM3631_BOOST),
@@ -151,6 +181,8 @@ static const struct ti_lmu_data chip##_data =	\
 }						\
 
 TI_LMU_DATA(lm3532, LM3532_MAX_REG);
+TI_LMU_DATA(lm36272, LM3627X_MAX_REG);
+TI_LMU_DATA(lm36274, LM3627X_MAX_REG);
 TI_LMU_DATA(lm3631, LM3631_MAX_REG);
 TI_LMU_DATA(lm3632, LM3632_MAX_REG);
 TI_LMU_DATA(lm3633, LM3633_MAX_REG);
@@ -159,6 +191,8 @@ TI_LMU_DATA(lm3697, LM3697_MAX_REG);
 
 static const struct of_device_id ti_lmu_of_match[] = {
 	{ .compatible = "ti,lm3532", .data = &lm3532_data },
+	{ .compatible = "ti,lm36272", .data = &lm36272_data },
+	{ .compatible = "ti,lm36274", .data = &lm36274_data },
 	{ .compatible = "ti,lm3631", .data = &lm3631_data },
 	{ .compatible = "ti,lm3632", .data = &lm3632_data },
 	{ .compatible = "ti,lm3633", .data = &lm3633_data },
@@ -176,6 +210,18 @@ static int ti_lmu_probe(struct i2c_client *cl, const struct i2c_device_id *id)
 	struct regmap_config regmap_cfg;
 	struct ti_lmu *lmu;
 	int ret;
+
+#ifdef CONFIG_MACH_XIAOMI_SDM439
+	extern char *saved_command_line;
+	int bkl_id = 0;
+	char *bkl_ptr = (char *)strnstr(saved_command_line, ":bklic=", strlen(saved_command_line));
+	bkl_ptr += strlen(":bklic=");
+	bkl_id = simple_strtol(bkl_ptr, NULL, 10);
+	if (bkl_id != 1) {
+		return -ENODEV;
+	}
+	pr_err("[bkl] %s enter\n", __func__);
+#endif
 
 	match = of_match_device(ti_lmu_of_match, dev);
 	if (!match)
@@ -218,6 +264,10 @@ static int ti_lmu_probe(struct i2c_client *cl, const struct i2c_device_id *id)
 
 	i2c_set_clientdata(cl, lmu);
 
+#ifdef CONFIG_MACH_XIAOMI_SDM439
+	pr_err("[bkl] %s finish\n", __func__);
+#endif
+
 	return mfd_add_devices(lmu->dev, 0, data->cells,
 			       data->num_cells, NULL, 0, NULL);
 }
@@ -233,6 +283,8 @@ static int ti_lmu_remove(struct i2c_client *cl)
 
 static const struct i2c_device_id ti_lmu_ids[] = {
 	{ "lm3532", LM3532 },
+	{ "lm36272", LM36272 },
+	{ "lm36274", LM36274 },
 	{ "lm3631", LM3631 },
 	{ "lm3632", LM3632 },
 	{ "lm3633", LM3633 },
