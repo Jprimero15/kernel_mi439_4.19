@@ -1129,7 +1129,11 @@ void __init debug_ll_io_init(void)
 #endif
 
 static void * __initdata vmalloc_min =
+#ifndef CONFIG_MACH_XIAOMI_SDM439
 	(void *)(VMALLOC_END - (240 << 20) - VMALLOC_OFFSET);
+#else
+	(void *)(VMALLOC_END - (400 << 20) - VMALLOC_OFFSET);
+#endif
 
 /*
  * vmalloc=size forces the vmalloc area to be exactly 'size'
