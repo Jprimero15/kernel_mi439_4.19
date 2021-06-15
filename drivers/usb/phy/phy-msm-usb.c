@@ -270,7 +270,11 @@ static ssize_t lpm_disconnect_thresh_enable_store(struct device *dev,
 }
 static DEVICE_ATTR_RW(lpm_disconnect_thresh_enable);
 
+#ifndef CONFIG_MACH_XIAOMI_SDM439
 static bool floated_charger_enable;
+#else
+static bool floated_charger_enable = true;
+#endif
 static ssize_t floated_charger_enable_value_show(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
@@ -2302,6 +2306,15 @@ static void msm_otg_start_peripheral(struct usb_otg *otg, int on)
 			msm_otg_bus_vote(motg, USB_MAX_PERF_VOTE);
 		/* bump up usb core_clk to default */
 		clk_set_rate(motg->core_clk, motg->core_clk_rate);
+
+#ifdef CONFIG_MACH_XIAOMI_SDM439
+		 if (get_psy_type(motg) == POWER_SUPPLY_TYPE_USB_CDP) {
+			 pr_err("xbt %s usb_gadget_connect, chg_type=%d\n", __func__, get_psy_type(motg));
+
+			 msm_chg_block_on(motg);
+			 usb_gadget_connect(otg->gadget);
+		 }
+#endif
 
 		usb_gadget_vbus_connect(otg->gadget);
 
