@@ -21,13 +21,6 @@ extern struct ktd3137_chip *bkl_chip;
 #include "mdss_dsi_cmd.h"
 #include "mdss_dsi_clk.h"
 
-#ifdef CONFIG_INPUT_TOUCHSCREEN_XIAOMI_OLIVE
-extern bool  is_ilitek_tp;
-extern void ilitek_call_resume_work(void);
-extern void lcd_call_tp_reset(int i);
-extern bool  is_focal_tp;
-#endif
-
 #define MMSS_SERDES_BASE_PHY 0x04f01000 /* mmss (De)Serializer CFG */
 
 #define MIPI_OUTP(addr, data) writel_relaxed((data), (addr))
@@ -505,24 +498,6 @@ struct mdss_dsi_ctrl_pdata {
 	struct mdss_intf_recovery *mdp_callback;
 	struct mdss_intf_ulp_clamp *clamp_handler;
 
-	struct dsi_panel_cmds CABC_UI_on_cmds;
-	struct dsi_panel_cmds CABC_STILL_on_cmds;
-	struct dsi_panel_cmds CABC_MOVIE_on_cmds;
-	struct dsi_panel_cmds CABC_off_cmds;
-	struct dsi_panel_cmds CE_on_cmds;
-	struct dsi_panel_cmds CE_off_cmds;
-	struct dsi_panel_cmds cold_gamma_cmds;
-	struct dsi_panel_cmds warm_gamma_cmds;
-	struct dsi_panel_cmds default_gamma_cmds;
-	struct dsi_panel_cmds PM1_cmds;
-	struct dsi_panel_cmds PM2_cmds;
-	struct dsi_panel_cmds PM3_cmds;
-	struct dsi_panel_cmds PM4_cmds;
-	struct dsi_panel_cmds PM5_cmds;
-	struct dsi_panel_cmds PM6_cmds;
-	struct dsi_panel_cmds PM7_cmds;
-	struct dsi_panel_cmds PM8_cmds;
-
 	struct dsi_panel_cmds on_cmds;
 	struct dsi_panel_cmds post_dms_on_cmds;
 	struct dsi_panel_cmds post_panel_on_cmds;
@@ -778,9 +753,6 @@ static inline const char *__mdss_dsi_pm_supply_node_name(
 	default:		return "???";
 	}
 }
-
-void mdss_dsi_panel_cmds_send(struct mdss_dsi_ctrl_pdata *ctrl,
-			struct dsi_panel_cmds *pcmds, u32 flags);
 
 static inline u32 mdss_dsi_get_hw_config(struct dsi_shared_data *sdata)
 {
