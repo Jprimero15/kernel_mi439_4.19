@@ -45,7 +45,6 @@
 #include "mdss_debug.h"
 #include "mdss_smmu.h"
 #include "mdss_mdp.h"
-#include "mdss_dsi.h"
 #include "mdss_sync.h"
 
 #if defined(CONFIG_FB_MSM_MDSS_XIAOMI_WPONIT_ADJUST)
@@ -784,148 +783,6 @@ static int mdss_fb_blanking_mode_switch(struct msm_fb_data_type *mfd, int mode)
 	return 0;
 }
 
-static ssize_t mdss_fb_change_dispparam(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t len)
-{
-
-	struct dsi_panel_cmds *CABC_UI_on_cmds_point;
-	struct dsi_panel_cmds *CABC_STILL_on_cmds_point;
-	struct dsi_panel_cmds *CABC_MOVIE_on_cmds_point;
-	struct dsi_panel_cmds *CABC_off_cmds_point;
-	struct dsi_panel_cmds *CE_on_cmds_point;
-	struct dsi_panel_cmds *CE_off_cmds_point;
-	struct dsi_panel_cmds *cold_gamma_cmds_point;
-	struct dsi_panel_cmds *warm_gamma_cmds_point;
-	struct dsi_panel_cmds *default_gamma_cmds_point;
-	struct dsi_panel_cmds *PM1_cmds_point;
-	struct dsi_panel_cmds *PM2_cmds_point;
-	struct dsi_panel_cmds *PM3_cmds_point;
-	struct dsi_panel_cmds *PM4_cmds_point;
-	struct dsi_panel_cmds *PM5_cmds_point;
-	struct dsi_panel_cmds *PM6_cmds_point;
-	struct dsi_panel_cmds *PM7_cmds_point;
-	struct dsi_panel_cmds *PM8_cmds_point;
-
-	if (kstrtouint(buf, 16, &change_par_buf) != 0)
-		pr_debug("Not able to read split values\n");
-
-	CABC_UI_on_cmds_point = &change_par_ctrl->CABC_UI_on_cmds;
-	CABC_STILL_on_cmds_point = &change_par_ctrl->CABC_STILL_on_cmds;
-	CABC_MOVIE_on_cmds_point = &change_par_ctrl->CABC_MOVIE_on_cmds;
-	CABC_off_cmds_point = &change_par_ctrl->CABC_off_cmds;
-	CE_on_cmds_point = &change_par_ctrl->CE_on_cmds;
-	CE_off_cmds_point = &change_par_ctrl->CE_off_cmds;
-	cold_gamma_cmds_point = &change_par_ctrl->cold_gamma_cmds;
-	warm_gamma_cmds_point = &change_par_ctrl->warm_gamma_cmds;
-	default_gamma_cmds_point = &change_par_ctrl->default_gamma_cmds;
-	PM1_cmds_point = &change_par_ctrl->PM1_cmds;
-	PM2_cmds_point = &change_par_ctrl->PM2_cmds;
-	PM3_cmds_point = &change_par_ctrl->PM3_cmds;
-	PM4_cmds_point = &change_par_ctrl->PM4_cmds;
-	PM5_cmds_point = &change_par_ctrl->PM5_cmds;
-	PM6_cmds_point = &change_par_ctrl->PM6_cmds;
-	PM7_cmds_point = &change_par_ctrl->PM7_cmds;
-	PM8_cmds_point = &change_par_ctrl->PM8_cmds;
-
-	if ((change_par_buf >= 0x01) && (change_par_buf <= 0x0c))
-		LCM_effect[0] = change_par_buf;  //gamma mode & PM mode
-	else if ((change_par_buf == 0x10) || (change_par_buf == 0xf0))
-		LCM_effect[1] = change_par_buf;  //CE mode
-	else if ((change_par_buf == 0x100) || (change_par_buf == 0x200) || (change_par_buf == 0x300) || (change_par_buf == 0x400))
-		LCM_effect[2] = change_par_buf;  //CABC mode
-
-	if (change_par_ctrl == NULL) {
-		pr_err("%s: Invalid input data\n", __func__);
-		return -EINVAL;
-	}
-
-	switch (change_par_buf) {
-	case 0x0001:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			warm_gamma_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x0002:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			default_gamma_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x0003:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			cold_gamma_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x0006:
-		mdss_dsi_panel_cmds_send(change_par_ctrl, PM1_cmds_point,
-			CMD_REQ_COMMIT);
-		break;
-	case 0x0007:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			PM2_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x0008:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			PM3_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x0009:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			PM4_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x000a:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			PM5_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x000b:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			PM6_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x000c:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			PM7_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x0005:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			PM8_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x0010:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			CE_on_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x00f0:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			CE_off_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x0100:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			CABC_UI_on_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x0200:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			CABC_STILL_on_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x0300:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			CABC_MOVIE_on_cmds_point, CMD_REQ_COMMIT);
-		break;
-	case 0x0400:
-		mdss_dsi_panel_cmds_send(change_par_ctrl,
-			CABC_off_cmds_point, CMD_REQ_COMMIT);
-		break;
-	default:
-		pr_err("ERROR MODE INPUT!\n");
-	}
-
-	return len;
-}
-
-static ssize_t mdss_fb_get_dispparam(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-
-	int ret;
-
-	ret = scnprintf(buf, PAGE_SIZE, "%x%x%x\n", LCM_effect[0],
-		LCM_effect[1], LCM_effect[2]);
-	return ret;
-}
-
 static ssize_t msm_fb_dfps_mode_store(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t len)
 {
@@ -1133,36 +990,6 @@ static ssize_t idle_power_collapse_show(struct device *dev,
 	return scnprintf(buf, PAGE_SIZE, "idle power collapsed\n");
 }
 
-unsigned int hbm_mode;
-extern int bkl_id;
-extern int ti_hbm_set(unsigned int num);
-extern int ktd_hbm_set(unsigned int num);
-static ssize_t mdss_fb_get_hbm(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	int ret;
-
-	ret = scnprintf(buf, PAGE_SIZE, "hbm_mode:%d\n", hbm_mode);
-	return ret;
-
-}
-static ssize_t mdss_fb_change_hbm(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t len)
-{
-	sscanf(buf, "%d", &hbm_mode) ;
-	if (hbm_mode >= HBM_MODE_LEVEL_MAX)
-		hbm_mode = HBM_MODE_LEVEL_MAX - 1;
-	if (hbm_mode < HBM_MODE_DEFAULT)
-		hbm_mode = HBM_MODE_DEFAULT;
-
-	if (bkl_id == 1) {
-		ti_hbm_set((enum backlight_hbm_mode)hbm_mode);
-	} else {
-		ktd_hbm_set((enum backlight_hbm_mode)hbm_mode);
-	}
-	return len;
-}
-
 static DEVICE_ATTR_RO(msm_fb_type);
 static DEVICE_ATTR_RW(msm_fb_split);
 static DEVICE_ATTR_RO(show_blank_event);
@@ -1176,10 +1003,6 @@ static DEVICE_ATTR_RW(msm_fb_dfps_mode);
 static DEVICE_ATTR_RO(measured_fps);
 static DEVICE_ATTR_RW(msm_fb_persist_mode);
 static DEVICE_ATTR_RO(idle_power_collapse);
-static DEVICE_ATTR(msm_fb_dispparam, 0644,
-	mdss_fb_get_dispparam, mdss_fb_change_dispparam);
-static DEVICE_ATTR(msm_fb_hbm, 0644,
-	mdss_fb_get_hbm, mdss_fb_change_hbm);
 #if defined(CONFIG_FB_MSM_MDSS_XIAOMI_WPONIT_ADJUST)
 static DEVICE_ATTR(msm_fb_wpoint, S_IRUGO | S_IWUSR,
 	mdss_fb_get_wpoint, mdss_fb_set_wpoint);
@@ -1205,8 +1028,6 @@ static struct attribute *mdss_fb_attrs[] = {
 	&dev_attr_measured_fps.attr,
 	&dev_attr_msm_fb_persist_mode.attr,
 	&dev_attr_idle_power_collapse.attr,
-	&dev_attr_msm_fb_dispparam.attr,
-	&dev_attr_msm_fb_hbm.attr,
 #if defined(CONFIG_FB_MSM_MDSS_XIAOMI_WPONIT_ADJUST)
 	&dev_attr_msm_fb_wpoint.attr,
 	&dev_attr_msm_fb_rpoint.attr,
