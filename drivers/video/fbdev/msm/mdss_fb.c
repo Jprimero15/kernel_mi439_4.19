@@ -45,15 +45,8 @@
 #include "mdss_debug.h"
 #include "mdss_smmu.h"
 #include "mdss_mdp.h"
+#include "mdss_dsi.h"
 #include "mdss_sync.h"
-
-#if defined(CONFIG_FB_MSM_MDSS_XIAOMI_WPONIT_ADJUST)
-extern uint32_t white_point_num_x;
-extern uint32_t white_point_num_y;
-extern uint32_t white_point_num_r;
-extern uint32_t white_point_num_g;
-extern uint32_t white_point_num_b;
-#endif
 
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
 #define MDSS_FB_NUM 3
@@ -828,72 +821,6 @@ static ssize_t msm_fb_dfps_mode_store(struct device *dev,
 	return len;
 }
 
-#if defined(CONFIG_FB_MSM_MDSS_XIAOMI_WPONIT_ADJUST)
-bool set_white_point_x = true;
-static ssize_t mdss_fb_set_wpoint(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t len)
-{
-	if (set_white_point_x) {
-		sscanf(buf, "%3d", &white_point_num_x) ;
-		set_white_point_x = false;
-	} else {
-		sscanf(buf, "%3d", &white_point_num_y) ;
-		set_white_point_x = true;
-	}
-	return len;
-}
-static ssize_t mdss_fb_get_wpoint(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	int ret;
-	ret = scnprintf(buf, PAGE_SIZE, "%3d%3d\n",
-		white_point_num_x, white_point_num_y);
-	return ret;
-}
-static ssize_t mdss_fb_set_rpoint(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t len)
-{
-	sscanf(buf, "%6d", &white_point_num_r) ;
-	return len;
-}
-static ssize_t mdss_fb_get_rpoint(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	int ret;
-	ret = scnprintf(buf, PAGE_SIZE, "%6d\n",
-		white_point_num_r);
-	return ret;
-}
-static ssize_t mdss_fb_set_gpoint(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t len)
-{
-	sscanf(buf, "%6d", &white_point_num_g) ;
-	return len;
-}
-static ssize_t mdss_fb_get_gpoint(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	int ret;
-	ret = scnprintf(buf, PAGE_SIZE, "%6d\n",
-		white_point_num_g);
-	return ret;
-}
-static ssize_t mdss_fb_set_bpoint(struct device *dev,
-	struct device_attribute *attr, const char *buf, size_t len)
-{
-	sscanf(buf, "%6d", &white_point_num_b) ;
-	return len;
-}
-static ssize_t mdss_fb_get_bpoint(struct device *dev,
-		struct device_attribute *attr, char *buf)
-{
-	int ret;
-	ret = scnprintf(buf, PAGE_SIZE, "%6d\n",
-		white_point_num_b);
-	return ret;
-}
-#endif
-
 static ssize_t msm_fb_dfps_mode_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -990,6 +917,36 @@ static ssize_t idle_power_collapse_show(struct device *dev,
 	return scnprintf(buf, PAGE_SIZE, "idle power collapsed\n");
 }
 
+unsigned int hbm_mode;
+extern int bkl_id;
+extern int ti_hbm_set(unsigned int num);
+extern int ktd_hbm_set(unsigned int num);
+static ssize_t mdss_fb_get_hbm(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	int ret;
+
+	ret = scnprintf(buf, PAGE_SIZE, "hbm_mode:%d\n", hbm_mode);
+	return ret;
+
+}
+static ssize_t mdss_fb_change_hbm(struct device *dev,
+	struct device_attribute *attr, const char *buf, size_t len)
+{
+	sscanf(buf, "%d", &hbm_mode) ;
+	if (hbm_mode >= HBM_MODE_LEVEL_MAX)
+		hbm_mode = HBM_MODE_LEVEL_MAX - 1;
+	if (hbm_mode < HBM_MODE_DEFAULT)
+		hbm_mode = HBM_MODE_DEFAULT;
+
+	if (bkl_id == 1) {
+		ti_hbm_set((enum backlight_hbm_mode)hbm_mode);
+	} else {
+		ktd_hbm_set((enum backlight_hbm_mode)hbm_mode);
+	}
+	return len;
+}
+
 static DEVICE_ATTR_RO(msm_fb_type);
 static DEVICE_ATTR_RW(msm_fb_split);
 static DEVICE_ATTR_RO(show_blank_event);
@@ -1003,16 +960,8 @@ static DEVICE_ATTR_RW(msm_fb_dfps_mode);
 static DEVICE_ATTR_RO(measured_fps);
 static DEVICE_ATTR_RW(msm_fb_persist_mode);
 static DEVICE_ATTR_RO(idle_power_collapse);
-#if defined(CONFIG_FB_MSM_MDSS_XIAOMI_WPONIT_ADJUST)
-static DEVICE_ATTR(msm_fb_wpoint, S_IRUGO | S_IWUSR,
-	mdss_fb_get_wpoint, mdss_fb_set_wpoint);
-static DEVICE_ATTR(msm_fb_rpoint, S_IRUGO | S_IWUSR,
-	mdss_fb_get_rpoint, mdss_fb_set_rpoint);
-static DEVICE_ATTR(msm_fb_gpoint, S_IRUGO | S_IWUSR,
-	mdss_fb_get_gpoint, mdss_fb_set_gpoint);
-static DEVICE_ATTR(msm_fb_bpoint, S_IRUGO | S_IWUSR,
-	mdss_fb_get_bpoint, mdss_fb_set_bpoint);
-#endif
+static DEVICE_ATTR(msm_fb_hbm, 0644,
+	mdss_fb_get_hbm, mdss_fb_change_hbm);
 
 static struct attribute *mdss_fb_attrs[] = {
 	&dev_attr_msm_fb_type.attr,
@@ -1028,12 +977,7 @@ static struct attribute *mdss_fb_attrs[] = {
 	&dev_attr_measured_fps.attr,
 	&dev_attr_msm_fb_persist_mode.attr,
 	&dev_attr_idle_power_collapse.attr,
-#if defined(CONFIG_FB_MSM_MDSS_XIAOMI_WPONIT_ADJUST)
-	&dev_attr_msm_fb_wpoint.attr,
-	&dev_attr_msm_fb_rpoint.attr,
-	&dev_attr_msm_fb_gpoint.attr,
-	&dev_attr_msm_fb_bpoint.attr,
-#endif
+	&dev_attr_msm_fb_hbm.attr,
 	NULL,
 };
 

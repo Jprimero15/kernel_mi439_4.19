@@ -21,6 +21,11 @@ extern struct ktd3137_chip *bkl_chip;
 #include "mdss_dsi_cmd.h"
 #include "mdss_dsi_clk.h"
 
+#ifdef CONFIG_INPUT_TOUCHSCREEN_XIAOMI_OLIVE
+extern bool  is_ilitek_tp;
+extern void ilitek_call_resume_work(void);
+#endif
+
 #define MMSS_SERDES_BASE_PHY 0x04f01000 /* mmss (De)Serializer CFG */
 
 #define MIPI_OUTP(addr, data) writel_relaxed((data), (addr))
@@ -497,7 +502,6 @@ struct mdss_dsi_ctrl_pdata {
 	struct mdss_intf_recovery *recovery;
 	struct mdss_intf_recovery *mdp_callback;
 	struct mdss_intf_ulp_clamp *clamp_handler;
-
 	struct dsi_panel_cmds on_cmds;
 	struct dsi_panel_cmds post_dms_on_cmds;
 	struct dsi_panel_cmds post_panel_on_cmds;
