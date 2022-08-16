@@ -26,6 +26,11 @@
 extern struct ktd3137_chip *bkl_chip;
 #endif
 
+#ifdef CONFIG_INPUT_TOUCHSCREEN_XIAOMI_OLIVE
+extern bool  is_ilitek_tp;
+extern void ilitek_call_resume_work(void);
+#endif
+
 #define DT_CMD_HDR 6
 #define DEFAULT_MDP_TRANSFER_TIME 14000
 
@@ -379,6 +384,10 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 {
 	struct mdss_dsi_ctrl_pdata *ctrl_pdata = NULL;
 	struct mdss_panel_info *pinfo = NULL;
+#ifdef CONFIG_INPUT_TOUCHSCREEN_XIAOMI_OLIVE
+	extern char *saved_command_line;
+	char *rf_panel_name = (char *)strnstr(saved_command_line, ":qcom,", strlen(saved_command_line));
+#endif
 	int i, rc = 0;
 
 	if (pdata == NULL) {
@@ -438,6 +447,7 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 				}
 			}
 
+#ifndef CONFIG_INPUT_TOUCHSCREEN_XIAOMI_OLIVE
 			for (i = 0; i < pdata->panel_info.rst_seq_len; ++i) {
 				gpio_set_value((ctrl_pdata->rst_gpio),
 					pdata->panel_info.rst_seq[i]);
@@ -445,7 +455,30 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 					usleep_range(pinfo->rst_seq[i] * 1000,
 						pinfo->rst_seq[i] * 1000);
 			}
+#endif
 
+#ifdef CONFIG_INPUT_TOUCHSCREEN_XIAOMI_OLIVE
+			rf_panel_name += strlen(":qcom,");
+			pr_info(" %s res=%d\n", rf_panel_name, strncmp(rf_panel_name, "mdss_dsi_nvt36525b_hdplus_video_c3i", strlen("mdss_dsi_nvt36525b_hdplus_video_c3i")));
+			if (!strncmp(rf_panel_name, "mdss_dsi_nvt36525b_hdplus_video_c3i", strlen("mdss_dsi_nvt36525b_hdplus_video_c3i"))) {
+				pr_err("This is novatek LCM!!!\n");
+				msleep(10);
+				for (i = 0; i < pdata->panel_info.rst_seq_len; ++i) {
+					gpio_set_value((ctrl_pdata->rst_gpio),
+						pdata->panel_info.rst_seq[i]);
+					if (pdata->panel_info.rst_seq[++i])
+						usleep_range((pinfo->rst_seq[i] * 1000),
+						(pinfo->rst_seq[i] * 1000) + 10);
+				}
+			}
+
+			if (is_ilitek_tp) {
+				pr_err("%s:  ILITEK  LCD Call TP Reset start! \n", __func__);
+				ilitek_call_resume_work();
+				pr_err("%s:  ILITEK  LCD Call TP Reset end! \n", __func__);
+				mdelay(35);
+			}
+#endif
 			if (gpio_is_valid(ctrl_pdata->avdd_en_gpio)) {
 				if (ctrl_pdata->avdd_en_gpio_invert) {
 					rc = gpio_direction_output(
@@ -500,8 +533,13 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 			gpio_set_value((ctrl_pdata->disp_en_gpio), 0);
 			gpio_free(ctrl_pdata->disp_en_gpio);
 		}
+#ifdef CONFIG_MACH_XIAOMI_OLIVES
+		gpio_set_value((ctrl_pdata->rst_gpio), 1);
+		gpio_free(ctrl_pdata->rst_gpio);
+#else
 		gpio_set_value((ctrl_pdata->rst_gpio), 0);
 		gpio_free(ctrl_pdata->rst_gpio);
+#endif
 		if (gpio_is_valid(ctrl_pdata->lcd_mode_sel_gpio)) {
 			gpio_set_value(ctrl_pdata->lcd_mode_sel_gpio, 0);
 			gpio_free(ctrl_pdata->lcd_mode_sel_gpio);
@@ -3011,9 +3049,6 @@ static int mdss_panel_parse_dt(struct device_node *np,
 
 	mdss_dsi_parse_reset_seq(np, pinfo->rst_seq, &(pinfo->rst_seq_len),
 		"qcom,mdss-dsi-reset-sequence");
-
-	mdss_dsi_parse_dcs_cmds(np, &ctrl_pdata->off_cmds,
-		"qcom,mdss-dsi-off-command", "qcom,mdss-dsi-off-command-state");
 
 	rc = of_property_read_u32(np, "qcom,adjust-timer-wakeup-ms", &tmp);
 	pinfo->adjust_timer_delay_ms = (!rc ? tmp : 0);
