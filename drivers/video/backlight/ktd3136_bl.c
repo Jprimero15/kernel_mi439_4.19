@@ -23,6 +23,10 @@
 
 struct ktd3137_chip *bkl_chip;
 
+#ifdef CONFIG_MACH_XIAOMI_SDM439
+#include <linux/sdm439_device.h>
+#endif
+
 #define KTD_DEBUG
 
  #ifdef KTD_DEBUG
@@ -630,14 +634,14 @@ int ktd_hbm_set(enum backlight_hbm_mode hbm_mode)
 	return 0;
 }
 
-#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
+#if defined(CONFIG_MACH_XIAOMI_SDM439) || defined(CONFIG_MACH_XIAOMI_OLIVES)
 #define LOWEST_BRIGHTNESS          8
 #endif
 
 int ktd3137_brightness_set(int brightness)
 {
 	LOG_DBG("%s brightness = %d\n", __func__, brightness);
-#if defined(PROJECT_OLIVE) || defined(PROJECT_OLIVELITE) || defined(PROJECT_OLIVEWOOD)
+    if (sdm439_current_device == XIAOMI_OLIVES) {
 	if ((brightness > 0) && (brightness <= LOWEST_BRIGHTNESS)) {
 		brightness = LOWEST_BRIGHTNESS;
 	};
@@ -647,7 +651,7 @@ int ktd3137_brightness_set(int brightness)
 		LOG_DBG("%s The lowest brightness = %d\n", __func__, brightness);
 		break;
 	}
-#endif
+    }
 	ktd3137_brightness_set_workfunc(bkl_chip, brightness);
 	return brightness;
 }
