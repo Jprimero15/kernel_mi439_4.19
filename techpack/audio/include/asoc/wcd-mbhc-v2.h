@@ -143,9 +143,22 @@ do {                                                    \
 #define HPHL_CROSS_CONN_THRESHOLD 100
 #define HPHR_CROSS_CONN_THRESHOLD 100
 
-#define WCD_MBHC_BTN_PRESS_COMPL_TIMEOUT_MS  50
+//#ifdef AW87519_PA
+#define WCD_MBHC_BTN_PRESS_COMPL_TIMEOUT_MS  250
+//#else
+//#define WCD_MBHC_BTN_PRESS_COMPL_TIMEOUT_MS  50
+//#endif
 #define ANC_DETECT_RETRY_CNT 7
 #define WCD_MBHC_SPL_HS_CNT  1
+
+/* cable type show in sys/class/switch/h2w/state */
+enum accdet_type_state_value {
+	NO_DEVICE_STATE = 0,
+	PLUG_IN_STATE = 1,
+	HEADSET_MIC_STATE = 11,
+	HEADSET_NO_MIC_STATE = 9,
+	LINE_OUT_DEVICE_STATE = 12,
+};
 
 enum wcd_mbhc_detect_logic {
 	WCD_DETECTION_LEGACY,
