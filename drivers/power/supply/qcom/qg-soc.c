@@ -94,7 +94,7 @@ static ssize_t fvss_delta_soc_interval_ms_store(struct device *dev,
 }
 DEVICE_ATTR_RW(fvss_delta_soc_interval_ms);
 
-static int qg_delta_soc_cold_interval_ms = 4000;
+static int qg_delta_soc_cold_interval_ms = 70000;
 static ssize_t soc_cold_interval_ms_show(struct device *dev,
 		struct device_attribute *attr, char *buf)
 {
@@ -394,6 +394,7 @@ int qg_adjust_sys_soc(struct qpnp_qg *chip)
 			soc = FULL_SOC - 1;
 	} else {
 		soc = DIV_ROUND_CLOSEST(chip->sys_soc, 100);
+		qg_dbg(chip, QG_DEBUG_SOC, "sys_soc=%d\n", chip->sys_soc);
 	}
 
 	/* FVSS */
@@ -412,9 +413,9 @@ int qg_adjust_sys_soc(struct qpnp_qg *chip)
 		}
 	}
 
-	qg_dbg(chip, QG_DEBUG_SOC, "sys_soc=%d adjusted sys_soc=%d\n",
-					chip->sys_soc, soc);
 
+	qg_dbg(chip, QG_DEBUG_SOC, "last_adj_sys_soc=%d  adj_sys_soc=%d sys_soc=%d\n",
+					chip->last_adj_ssoc, soc, chip->sys_soc);
 	chip->last_adj_ssoc = soc;
 
 	return soc;
@@ -462,6 +463,10 @@ static void get_next_update_time(struct qpnp_qg *chip)
 static bool is_scaling_required(struct qpnp_qg *chip)
 {
 	bool input_present = is_input_present(chip);
+
+	qg_dbg(chip, QG_DEBUG_SOC,
+	"maint_soc=%d, msoc=%d, delta_soc=%d, catch_up_soc=%d, is_input_present=%d\n",
+	chip->maint_soc, chip->msoc, chip->dt.delta_soc, chip->catch_up_soc, is_input_present(chip));
 
 	if (!chip->profile_loaded)
 		return false;
