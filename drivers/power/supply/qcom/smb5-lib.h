@@ -94,16 +94,21 @@ enum print_reason {
 
 #define SDP_100_MA			100000
 #define SDP_CURRENT_UA			500000
-#define CDP_CURRENT_UA			1500000
-#define DCP_CURRENT_UA			1500000
+#define CDP_CURRENT_UA			1000000
+#define DCP_CURRENT_UA			3000000
+#define HVDCP_CURRENT_UA		3000000
 #define HVDCP_CURRENT_UA		3000000
 #define TYPEC_DEFAULT_CURRENT_UA	900000
 #define TYPEC_MEDIUM_CURRENT_UA		1500000
 #define TYPEC_HIGH_CURRENT_UA		3000000
+#define SMBCHG_UPDATE_MS		1000
 #define DCIN_ICL_MIN_UA			100000
 #define DCIN_ICL_MAX_UA			1500000
 #define DCIN_ICL_STEP_UA		100000
 #define ROLE_REVERSAL_DELAY_MS		500
+#define DCP_CURRENT_UA_PINE_IDN		1000000
+#define DCP_CURRENT_UA_PINE_LIMIT	1300000
+
 
 enum smb_mode {
 	PARALLEL_MASTER = 0,
@@ -398,6 +403,7 @@ struct smb_charger {
 	struct mutex		adc_lock;
 	struct mutex		dpdm_lock;
 	struct mutex		typec_lock;
+	struct mutex		cool_current;
 
 	/* power supplies */
 	struct power_supply		*batt_psy;
@@ -471,6 +477,8 @@ struct smb_charger {
 	struct delayed_work	pr_swap_detach_work;
 	struct delayed_work	pr_lock_clear_work;
 	struct delayed_work	role_reversal_check;
+	struct delayed_work	cool_limit_work;
+	struct delayed_work 	arb_monitor_work;
 
 	struct alarm		lpd_recheck_timer;
 	struct alarm		moisture_protection_alarm;
@@ -511,6 +519,7 @@ struct smb_charger {
 	int			fake_batt_status;
 	bool			step_chg_enabled;
 	bool			sw_jeita_enabled;
+	bool			hw_jeita_enabled;
 	bool			jeita_arb_enable;
 	bool			typec_legacy_use_rp_icl;
 	bool			is_hdc;
@@ -612,6 +621,11 @@ struct smb_charger {
 	bool			flash_init_done;
 	bool			flash_active;
 	u32			irq_status;
+	unsigned long           recent_collapse_time;
+	bool		        hvdcp_disabled;
+	bool		        collapsed;
+	struct delayed_work hw_suchg_detect_work;
+	int 		        count;
 
 	/* wireless */
 	int			dcin_uv_count;
