@@ -6036,7 +6036,14 @@ irqreturn_t usb_source_change_irq_handler(int irq, void *data)
 		smblib_err(chg, "Couldn't read APSD_STATUS rc=%d\n", rc);
 		return IRQ_HANDLED;
 	}
-	smblib_dbg(chg, PR_INTERRUPT, "APSD_STATUS = 0x%02x\n", stat);
+
+	rc = smblib_read(chg, APSD_RESULT_STATUS_REG, &apsd_result);
+	if (rc < 0) {
+	smblib_err(chg, "Couldn't read APSD_RESULT rc=%d\n", rc);
+	return IRQ_HANDLED;
+	}
+
+	smblib_err(chg, "APSD_STATUS = 0x%02x,APSD_RESULT = 0x%02x\n", stat, apsd_result);
 
 	if ((chg->connector_type == POWER_SUPPLY_CONNECTOR_MICRO_USB)
 		&& (stat & APSD_DTC_STATUS_DONE_BIT)
@@ -6080,6 +6087,18 @@ irqreturn_t usb_source_change_irq_handler(int irq, void *data)
 		return IRQ_HANDLED;
 	}
 	smblib_dbg(chg, PR_INTERRUPT, "APSD_STATUS = 0x%02x\n", stat);
+
+	if (chg->system_temp_level > 0) {
+		if (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_HVDCP
+			|| chg->real_charger_type == POWER_SUPPLY_TYPE_USB_HVDCP_3) {
+			smblib_err(chg, "%s:system_temp_level = %d, ibus =%d\n",
+						__func__, chg->system_temp_level,
+						hvdcp_ther_ibus_olive[chg->system_temp_level]);
+
+			vote(chg->usb_icl_votable, THERMAL_DAEMON_VOTER, true,
+					hvdcp_ther_ibus_olive[chg->system_temp_level]);
+		}
+	}
 
 	return IRQ_HANDLED;
 }
@@ -6181,18 +6200,6 @@ static void typec_src_fault_condition_cfg(struct smb_charger *chg, bool src)
 		smblib_err(chg, "Couldn't write OTG_FAULT_CONDITION_CFG_REG rc=%d\n",
 			rc);
 }
-
-	if (chg->system_temp_level > 0) {
-		if (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_HVDCP
-			|| chg->real_charger_type == POWER_SUPPLY_TYPE_USB_HVDCP_3) {
-			smblib_err(chg, "%s:system_temp_level = %d, ibus =%d\n",
-						__func__, chg->system_temp_level,
-						hvdcp_ther_ibus_olive[chg->system_temp_level]);
-
-			vote(chg->usb_icl_votable, THERMAL_DAEMON_VOTER, true,
-					hvdcp_ther_ibus_olive[chg->system_temp_level]);
-		}
-	}
 
 static void typec_sink_insertion(struct smb_charger *chg)
 {
@@ -8230,6 +8237,7 @@ static void smbchg_cool_limit_work(struct work_struct *work)
 		mutex_unlock(&chg->cool_current);
 	}
 	schedule_delayed_work(&chg->cool_limit_work, msecs_to_jiffies(SMBCHG_UPDATE_MS));
+}
 
 static int smblib_create_votables(struct smb_charger *chg)
 {
@@ -8427,6 +8435,7 @@ int smblib_init(struct smb_charger *chg)
 
 	INIT_DELAYED_WORK(&chg->role_reversal_check,
 					smblib_typec_role_check_work);
+	INIT_DELAYED_WORK(&chg->arb_monitor_work, smblib_arb_monitor_work);
 	INIT_DELAYED_WORK(&chg->hw_suchg_detect_work, smblib_hw_suchg_detect_work);
 	if (chg->hw_jeita_enabled) {
 		INIT_DELAYED_WORK(&chg->cool_limit_work, smbchg_cool_limit_work);

@@ -2427,7 +2427,7 @@ static int qg_charge_full_update(struct qpnp_qg *chip)
 			chip->charge_full = true;
 			qg_dbg(chip, QG_DEBUG_STATUS, "Setting charge_full (0->1) @ msoc=%d\n",
 					chip->msoc);
-		} else if (health != POWER_SUPPLY_HEALTH_WARM) {
+		} else if (health == POWER_SUPPLY_HEALTH_WARM) {
 			/* terminated in JEITA */
 			prop.intval = HOT_FVCOMP_4000MV;
 			pr_err("set status 4000mv\n");
