@@ -298,7 +298,7 @@ static const struct clamp_config clamp_levels[] = {
 	{ {0x11C6, 0x11F9, 0x13F1}, {0x60, 0x2B, 0x9C} },
 };
 
-#define PMI632_MAX_ICL_UA	3000000
+#define PMI632_MAX_ICL_UA	2000000
 #define PM6150_MAX_FCC_UA	3000000
 static int smb5_chg_config_init(struct smb5 *chip)
 {
@@ -371,7 +371,7 @@ static int smb5_chg_config_init(struct smb5 *chip)
 		goto out;
 	}
 
-	chg->chg_freq.freq_5V			= 600;
+	chg->chg_freq.freq_5V			= 1050;
 	chg->chg_freq.freq_6V_8V		= 800;
 	chg->chg_freq.freq_9V			= 1050;
 	chg->chg_freq.freq_12V                  = 1200;
@@ -462,6 +462,13 @@ static int smb5_parse_dt_misc(struct smb5 *chip, struct device_node *node)
 
 	chg->sw_jeita_enabled = of_property_read_bool(node,
 				"qcom,sw-jeita-enable");
+
+	if (!chg->sw_jeita_enabled) {
+	chg->hw_jeita_enabled = of_property_read_bool(node,
+				"qcom,hw-jeita-enable");
+	}
+	pr_info("sw_jeita_enable = %d, hw_jeita_enable = %d",
+			chg->sw_jeita_enabled, chg->hw_jeita_enabled);
 
 	chg->jeita_arb_enable = of_property_read_bool(node,
 				"qcom,jeita-arb-enable");
@@ -891,6 +898,7 @@ static enum power_supply_property smb5_usb_props[] = {
 	POWER_SUPPLY_PROP_APSD_TIMEOUT,
 	POWER_SUPPLY_PROP_CHARGER_STATUS,
 	POWER_SUPPLY_PROP_INPUT_VOLTAGE_SETTLED,
+	POWER_SUPPLY_PROP_HVDCP_TYPE3,
 };
 
 static int smb5_usb_get_prop(struct power_supply *psy,
@@ -932,7 +940,7 @@ static int smb5_usb_get_prop(struct power_supply *psy,
 		rc = smblib_get_prop_input_current_max(chg, val);
 		break;
 	case POWER_SUPPLY_PROP_TYPE:
-		val->intval = POWER_SUPPLY_TYPE_USB_PD;
+		val->intval = chg->real_charger_type;
 		break;
 	case POWER_SUPPLY_PROP_REAL_TYPE:
 		val->intval = chg->real_charger_type;
@@ -1059,6 +1067,13 @@ static int smb5_usb_get_prop(struct power_supply *psy,
 				val->intval = (buff[1] << 8 | buff[0]) * 1038;
 		}
 		break;
+	case POWER_SUPPLY_PROP_HVDCP_TYPE3:
+		if (chg->real_charger_type == POWER_SUPPLY_TYPE_USB_HVDCP
+			|| chg->real_charger_type == POWER_SUPPLY_TYPE_USB_HVDCP_3)
+			val->intval = 1;
+		else
+			val->intval = 0;
+		break;
 	default:
 		pr_err("get prop %d is not supported in usb\n", psp);
 		rc = -EINVAL;
@@ -1152,6 +1167,9 @@ static int smb5_usb_set_prop(struct power_supply *psy,
 		del_timer_sync(&chg->apsd_timer);
 		chg->apsd_ext_timeout = false;
 		smblib_rerun_apsd(chg);
+		break;
+	case POWER_SUPPLY_PROP_REAL_TYPE:
+		chg->real_charger_type = val->intval;
 		break;
 	default:
 		pr_err("set prop %d is not supported\n", psp);
@@ -1738,6 +1756,7 @@ static enum power_supply_property smb5_batt_props[] = {
 	POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN,
 	POWER_SUPPLY_PROP_TIME_TO_FULL_NOW,
 	POWER_SUPPLY_PROP_FCC_STEPPER_ENABLE,
+	POWER_SUPPLY_PROP_FVCOMP,
 };
 
 #define DEBUG_ACCESSORY_TEMP_DECIDEGC	250
@@ -1828,7 +1847,7 @@ static int smb5_batt_get_prop(struct power_supply *psy,
 						POWER_SUPPLY_PROP_TEMP, val);
 		break;
 	case POWER_SUPPLY_PROP_TECHNOLOGY:
-		val->intval = POWER_SUPPLY_TECHNOLOGY_LION;
+		val->intval = POWER_SUPPLY_TECHNOLOGY_LIPO;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_DONE:
 		rc = smblib_get_prop_batt_charge_done(chg, val);
@@ -1880,8 +1899,7 @@ static int smb5_batt_get_prop(struct power_supply *psy,
 		val->intval = 0;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-		rc = smblib_get_prop_from_bms(chg,
-				POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN, val);
+		val->intval = 5000000;
 		break;
 	case POWER_SUPPLY_PROP_TIME_TO_FULL_NOW:
 		rc = smblib_get_prop_from_bms(chg,
@@ -1889,6 +1907,9 @@ static int smb5_batt_get_prop(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_FCC_STEPPER_ENABLE:
 		val->intval = chg->fcc_stepper_enable;
+		break;
+	case POWER_SUPPLY_PROP_FVCOMP:
+		val->intval = 0;
 		break;
 	default:
 		pr_err("batt power supply prop %d not supported\n", psp);
@@ -1997,6 +2018,9 @@ static int smb5_batt_set_prop(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_FCC_STEPPER_ENABLE:
 		chg->fcc_stepper_enable = val->intval;
 		break;
+	case POWER_SUPPLY_PROP_FVCOMP:
+		rc = smblib_write(chg, JEITA_FVCOMP_CFG_HOT_REG, val->intval);
+		break;
 	default:
 		rc = -EINVAL;
 	}
@@ -2018,6 +2042,7 @@ static int smb5_batt_prop_is_writeable(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_INPUT_CURRENT_LIMITED:
 	case POWER_SUPPLY_PROP_STEP_CHARGING_ENABLED:
 	case POWER_SUPPLY_PROP_DIE_HEALTH:
+	case POWER_SUPPLY_PROP_CONSTANT_CHARGE_CURRENT_MAX:
 		return 1;
 	default:
 		break;
@@ -2462,9 +2487,9 @@ static int smb5_configure_mitigation(struct smb_charger *chg)
 	}
 
 	rc = smblib_masked_write(chg, MISC_THERMREG_SRC_CFG_REG,
-		THERMREG_SW_ICL_ADJUST_BIT | THERMREG_DIE_ADC_SRC_EN_BIT |
-		THERMREG_DIE_CMP_SRC_EN_BIT | THERMREG_SKIN_ADC_SRC_EN_BIT |
-		SKIN_ADC_CFG_BIT | THERMREG_CONNECTOR_ADC_SRC_EN_BIT, src_cfg);
+			THERMREG_DIE_ADC_SRC_EN_BIT
+			| THERMREG_DIE_CMP_SRC_EN_BIT, src_cfg);
+
 	if (rc < 0) {
 		dev_err(chg->dev,
 				"Couldn't configure THERM_SRC reg rc=%d\n", rc);
@@ -2671,6 +2696,36 @@ static int smb5_init_connector_type(struct smb_charger *chg)
 
 }
 
+static int smb5_init_hw_jeita(struct smb_charger *chg)
+{
+	int rc = 0;
+
+	rc = smblib_write(chg, JEITA_FVCOMP_CFG_COLD_REG, COOL_FV_4400MV);
+	if (rc < 0) {
+		dev_err(chg->dev, "%s:Couldn't configure JEITA_FVCOMP_CFG_COLD_REG rc=%d\n",
+			__func__, rc);
+	}
+
+	rc = smblib_write(chg, JEITA_FVCOMP_CFG_HOT_REG, HOT_FV_4100MV);
+	if (rc < 0) {
+		dev_err(chg->dev, "%s:Couldn't configure JEITA_FVCOMP_CFG_HOT_REG rc=%d\n",
+			__func__, rc);
+	}
+	rc = smblib_write(chg, JEITA_CCCOMP_CFG_HOT_REG, HOT_ICL_OLIVE_2450MA);
+	if (rc < 0) {
+		dev_err(chg->dev, "%s:Couldn't configure JEITA_FVCOMP_CFG_COLD_REG rc=%d\n",
+			__func__, rc);
+	}
+
+	rc = smblib_write(chg, JEITA_CCCOMP_CFG_COLD_REG, COOL_ICL_OLIVE_2950MA);
+	if (rc < 0) {
+		dev_err(chg->dev, "%s:Couldn't configure JEITA_FVCOMP_CFG_HOT_REG rc=%d\n",
+			__func__, rc);
+	}
+	return rc;
+}
+
+
 static int smb5_init_hw(struct smb5 *chip)
 {
 	struct smb_charger *chg = &chip->chg;
@@ -2828,6 +2883,15 @@ static int smb5_init_hw(struct smb5 *chip)
 		return rc;
 	}
 
+	rc = smblib_masked_write(chg, USBIN_AICL_OPTIONS_CFG_REG,
+			USBIN_AICL_ADC_EN_BIT |
+			USBIN_AICL_START_AT_MAX_BIT |
+			SUSPEND_ON_COLLAPSE_USBIN_BIT, 0);
+	if (rc < 0) {
+		dev_err(chg->dev, "Couldn't config AICL rc=%d\n", rc);
+		return rc;
+	}
+
 	/* enable the charging path */
 	rc = vote(chg->chg_disable_votable, DEFAULT_VOTER, false, 0);
 	if (rc < 0) {
@@ -2951,6 +3015,24 @@ static int smb5_init_hw(struct smb5 *chip)
 				rc);
 			return rc;
 		}
+	}
+
+	if (chg->hw_jeita_enabled) {
+		rc = smb5_init_hw_jeita(chg);
+		if (rc < 0) {
+			dev_err(chg->dev, "smb5 init hw jeita fail rc=%d\n",
+					rc);
+		}
+	}
+	rc = smblib_write(chg, USBIN_9V_AICL_THRESHOLD_REG, 0x5);
+	if (rc < 0) {
+		dev_err(chg->dev, "Couldn't configure USBIN_9V_AICL_THRESHOLD_REG rc=%d\n",
+			rc);
+		return rc;
+	}
+	rc = smblib_write(chg, 0x1342, 0x1);
+	if (rc < 0) {
+		dev_err(chg->dev, "Couldn't config 0x1342 to 0x1 rc=%d\n", rc);
 	}
 
 	if (chg->smb_pull_up != -EINVAL) {
@@ -3572,6 +3654,7 @@ static int smb5_probe(struct platform_device *pdev)
 	chg->otg_present = false;
 	chg->main_fcc_max = -EINVAL;
 	mutex_init(&chg->adc_lock);
+	mutex_init(&chg->cool_current);
 
 	chg->regmap = dev_get_regmap(chg->dev->parent, NULL);
 	if (!chg->regmap) {
