@@ -27,6 +27,7 @@
 		qcom,cam-vreg-min-voltage = <2850000>;
 		qcom,cam-vreg-max-voltage = <2850000>;
 		qcom,cam-vreg-op-mode = <80000>;
+		status = "ok";
 	};
 
 	eeprom0: qcom,eeprom@0 {
@@ -602,7 +603,7 @@
 		qcom,csid-sd-index = <0>;
 		qcom,mount-angle = <90>;
 		qcom,eeprom-src = <&eeprom0 &eeprom1 &eeprom2 &eeprom3 &eeprom6 &eeprom7>;
-		//qcom,led-flash-src = <&led_flash0>;
+		qcom,led-flash-src = <&led_flash0>;
 		qcom,actuator-src = <&actuator0>;
 		cam_vana-supply = <&pm8953_l22>;
 		cam_vio-supply = <&pm8953_l6>;
