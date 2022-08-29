@@ -78,3 +78,4 @@ obj-$(CONFIG_QTI_XR_SMRTVWR_MISC) += qxr-stdalonevwr.o
 obj-$(CONFIG_FPR_FPC)		+= fpr_FingerprintCard/
 obj-$(CONFIG_FINGERPRINT_GOODIX_GF3208)     += goodix/
 obj-y                           += qrc/
+obj-y                           += fm_con.o
