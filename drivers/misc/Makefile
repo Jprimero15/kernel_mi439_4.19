@@ -79,3 +79,4 @@ obj-$(CONFIG_FPR_FPC)		+= fpr_FingerprintCard/
 obj-$(CONFIG_FINGERPRINT_GOODIX_GF3208)     += goodix/
 obj-y                           += qrc/
 obj-$(CONFIG_KINECTICS_XR_NORDIC) += kxrctrl/
+obj-y                           += fm_con.o
