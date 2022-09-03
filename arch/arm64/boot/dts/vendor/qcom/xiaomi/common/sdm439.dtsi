@@ -8,11 +8,14 @@
 };
 
 &reserved_memory {
-	pstore_reserve_mem: pstore_reserve_mem_region@0 {
-		compatible = "removed-dma-pool";
-		no-map;
-		reg = <0x0 0x9ff00000 0x0 0x00100000>;
-	};
+		ramoops {
+			compatible = "removed-dma-pool", "ramoops";
+			no-map;
+			reg = <0x0 0x9ff00000 0x0 0x00400000>;
+			console-size = <0x200000>;
+			pmsg-size = <0x200000>;
+			status = "ok";
+		};
 };
 
 &adsp_fw_mem {
