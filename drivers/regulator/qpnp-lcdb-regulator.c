@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2016-2021, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2021 XiaoMi, Inc.
  */
 
 #define pr_fmt(fmt)	"LCDB: %s: " fmt, __func__
@@ -17,6 +18,8 @@
 #include <linux/regulator/of_regulator.h>
 #include <linux/regulator/machine.h>
 #include <linux/qpnp/qpnp-revid.h>
+
+#include <linux/sdm439_device.h>
 
 #define QPNP_LCDB_REGULATOR_DRIVER_NAME		"qcom,qpnp-lcdb-regulator"
 
@@ -580,7 +583,11 @@ static int qpnp_lcdb_ttw_enter(struct qpnp_lcdb *lcdb)
 	if (rc < 0)
 		return rc;
 
-	val = 0;
+        if (sdm439_current_device == XIAOMI_OLIVES) {
+       		val = 2;
+	} else {
+	        val = 0;
+        }
 	rc = qpnp_lcdb_write(lcdb, lcdb->base + LCDB_PWRUP_PWRDN_CTL_REG,
 			     &val, 1);
 	if (rc < 0)
@@ -1348,6 +1355,8 @@ static int qpnp_lcdb_ldo_regulator_enable(struct regulator_dev *rdev)
 	return rc;
 }
 
+extern bool ilitek_gesture_flag;
+
 static int qpnp_lcdb_ldo_regulator_disable(struct regulator_dev *rdev)
 {
 	int rc = 0;
@@ -1357,7 +1366,12 @@ static int qpnp_lcdb_ldo_regulator_disable(struct regulator_dev *rdev)
 		return 0;
 
 	mutex_lock(&lcdb->lcdb_mutex);
-	rc = qpnp_lcdb_disable(lcdb);
+	if (sdm439_current_device == XIAOMI_OLIVES) {
+		if ((ilitek_gesture_flag != true))
+			rc = qpnp_lcdb_disable(lcdb);
+	} else {
+	                rc = qpnp_lcdb_disable(lcdb);
+        }
 	if (rc < 0)
 		pr_err("Failed to disable lcdb rc=%d\n", rc);
 	mutex_unlock(&lcdb->lcdb_mutex);
@@ -1445,7 +1459,12 @@ static int qpnp_lcdb_ncp_regulator_disable(struct regulator_dev *rdev)
 		return 0;
 
 	mutex_lock(&lcdb->lcdb_mutex);
-	rc = qpnp_lcdb_disable(lcdb);
+	if (sdm439_current_device == XIAOMI_OLIVES) {
+		if ((ilitek_gesture_flag != true))
+			rc = qpnp_lcdb_disable(lcdb);
+        } else {
+                        rc = qpnp_lcdb_disable(lcdb);
+        }
 	if (rc < 0)
 		pr_err("Failed to disable lcdb rc=%d\n", rc);
 	mutex_unlock(&lcdb->lcdb_mutex);
