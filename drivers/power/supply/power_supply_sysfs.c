@@ -19,6 +19,8 @@
 
 #include "power_supply.h"
 
+#include <linux/sdm439_device.h>
+
 /*
  * This is because the name "current" breaks the device attr macro.
  * The "current" word resolves to "(get_current())" so instead of
@@ -158,19 +160,21 @@ static ssize_t power_supply_show_property(struct device *dev,
 		}
 	}
 
-	if (value.intval == POWER_SUPPLY_TYPE_USB_PD) {
-		ret = power_supply_get_property(psy, psp, &value);
+    if (sdm439_current_device == XIAOMI_OLIVES) {
+        if (value.intval == POWER_SUPPLY_TYPE_USB_PD) {
+            ret = power_supply_get_property(psy, psp, &value);
 
-		if (ret < 0) {
-			if (ret == -ENODATA)
-				dev_dbg(dev, "driver has no data for `%s' property\n",
-					attr->attr.name);
-			else if (ret != -ENODEV && ret != -EAGAIN)
-				dev_err(dev, "driver failed to report `%s' property: %zd\n",
-					attr->attr.name, ret);
-			return ret;
-		}
-	}
+            if (ret < 0) {
+                if (ret == -ENODATA)
+                    dev_dbg(dev, "driver has no data for `%s' property\n",
+                        attr->attr.name);
+                else if (ret != -ENODEV && ret != -EAGAIN)
+                    dev_err(dev, "driver failed to report `%s' property: %zd\n",
+                        attr->attr.name, ret);
+                return ret;
+            }
+        }
+    }
 
 	switch (psp) {
 	case POWER_SUPPLY_PROP_STATUS:

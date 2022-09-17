@@ -8,6 +8,8 @@
 
 #include <linux/bitops.h>
 
+#include <linux/sdm439_device.h>
+
 #define CHGR_BASE	0x1000
 #define DCDC_BASE	0x1100
 #define BATIF_BASE	0x1200
@@ -356,7 +358,7 @@ enum {
  *  TYPEC Peripheral Registers  *
  ********************************/
 #define TYPE_C_SNK_STATUS_REG			(TYPEC_BASE + 0x06)
-#define DETECTED_SRC_TYPE_MASK			GENMASK(9, 0)
+#define DETECTED_SRC_TYPE_MASK ((sdm439_current_device == XIAOMI_PINE) ? GENMASK(6, 0) : GENMASK(9, 0))
 #define SNK_RP_STD_DAM_BIT 		BIT(9)
 #define SNK_RP_1P5_DAM_BIT 		BIT(8)
 #define SNK_RP_3P0_DAM_BIT 		BIT(7)
@@ -365,7 +367,6 @@ enum {
 #define DAM_DIS_AICL 		BIT(3)
 #define SCHG_USB_TYPE_C_CFG		(USBIN_BASE + 0x58)
 #define BC1P2_START_ON_CC			BIT(7)
-//#define DETECTED_SRC_TYPE_MASK			GENMASK(6, 0)
 #define SNK_DAM_MASK				GENMASK(6, 4)
 #define SNK_DAM_500MA_BIT			BIT(6)
 #define SNK_DAM_1500MA_BIT			BIT(5)
