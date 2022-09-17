@@ -24,6 +24,8 @@
 #include "smb5-lib.h"
 #include "schgm-flash.h"
 
+#include <linux/sdm439_device.h>
+
 static struct smb_params smb5_pmi632_params = {
 	.fcc			= {
 		.name   = "fast charge current",
@@ -1899,7 +1901,7 @@ static int smb5_batt_get_prop(struct power_supply *psy,
 		val->intval = 0;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-		val->intval = 5000000;
+		val->intval = (sdm439_current_device == XIAOMI_PINE) ? 4000000 : 5000000;
 		break;
 	case POWER_SUPPLY_PROP_TIME_TO_FULL_NOW:
 		rc = smblib_get_prop_from_bms(chg,
@@ -2711,17 +2713,32 @@ static int smb5_init_hw_jeita(struct smb_charger *chg)
 		dev_err(chg->dev, "%s:Couldn't configure JEITA_FVCOMP_CFG_HOT_REG rc=%d\n",
 			__func__, rc);
 	}
-	rc = smblib_write(chg, JEITA_CCCOMP_CFG_HOT_REG, HOT_ICL_OLIVE_2450MA);
-	if (rc < 0) {
-		dev_err(chg->dev, "%s:Couldn't configure JEITA_FVCOMP_CFG_COLD_REG rc=%d\n",
-			__func__, rc);
-	}
+    if (sdm439_current_device == XIAOMI_PINE) {
+        rc = smblib_write(chg, JEITA_CCCOMP_CFG_HOT_REG, HOT_ICL_1000MA);
+        if (rc < 0) {
+            dev_err(chg->dev, "%s:Couldn't configure JEITA_FVCOMP_CFG_COLD_REG rc=%d\n",
+                __func__, rc);
+        }
 
-	rc = smblib_write(chg, JEITA_CCCOMP_CFG_COLD_REG, COOL_ICL_OLIVE_2950MA);
-	if (rc < 0) {
-		dev_err(chg->dev, "%s:Couldn't configure JEITA_FVCOMP_CFG_HOT_REG rc=%d\n",
-			__func__, rc);
-	}
+        rc = smblib_write(chg, JEITA_CCCOMP_CFG_COLD_REG, COOL_ICL_1950MA);
+        if (rc < 0) {
+            dev_err(chg->dev, "%s:Couldn't configure JEITA_FVCOMP_CFG_HOT_REG rc=%d\n",
+                __func__, rc);
+        }
+    } else {
+        rc = smblib_write(chg, JEITA_CCCOMP_CFG_HOT_REG, HOT_ICL_OLIVE_2450MA);
+        if (rc < 0) {
+            dev_err(chg->dev, "%s:Couldn't configure JEITA_FVCOMP_CFG_COLD_REG rc=%d\n",
+                __func__, rc);
+        }
+
+        rc = smblib_write(chg, JEITA_CCCOMP_CFG_COLD_REG, COOL_ICL_OLIVE_2950MA);
+        if (rc < 0) {
+            dev_err(chg->dev, "%s:Couldn't configure JEITA_FVCOMP_CFG_HOT_REG rc=%d\n",
+                __func__, rc);
+        }
+    }
+
 	return rc;
 }
 
@@ -3024,12 +3041,14 @@ static int smb5_init_hw(struct smb5 *chip)
 					rc);
 		}
 	}
-	rc = smblib_write(chg, USBIN_9V_AICL_THRESHOLD_REG, 0x5);
-	if (rc < 0) {
-		dev_err(chg->dev, "Couldn't configure USBIN_9V_AICL_THRESHOLD_REG rc=%d\n",
-			rc);
-		return rc;
-	}
+    if (sdm439_current_device == XIAOMI_OLIVES) {
+        rc = smblib_write(chg, USBIN_9V_AICL_THRESHOLD_REG, 0x5);
+        if (rc < 0) {
+            dev_err(chg->dev, "Couldn't configure USBIN_9V_AICL_THRESHOLD_REG rc=%d\n",
+                rc);
+            return rc;
+        }
+    }
 	rc = smblib_write(chg, 0x1342, 0x1);
 	if (rc < 0) {
 		dev_err(chg->dev, "Couldn't config 0x1342 to 0x1 rc=%d\n", rc);

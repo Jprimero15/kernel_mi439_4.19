@@ -18,6 +18,8 @@
 #include "storm-watch.h"
 #include "battery.h"
 
+#include <linux/sdm439_device.h>
+
 enum print_reason {
 	PR_INTERRUPT	= BIT(0),
 	PR_REGISTER	= BIT(1),
@@ -95,12 +97,11 @@ enum print_reason {
 #define SDP_100_MA			100000
 #define SDP_CURRENT_UA			500000
 #define CDP_CURRENT_UA			1000000
-#define DCP_CURRENT_UA			3000000
-#define HVDCP_CURRENT_UA		3000000
-#define HVDCP_CURRENT_UA		3000000
+#define DCP_CURRENT_UA			((sdm439_current_device == XIAOMI_PINE) ? 2000000 : 3000000)
+#define HVDCP_CURRENT_UA		((sdm439_current_device == XIAOMI_PINE) ? 2000000 : 3000000)
+#define TYPEC_HIGH_CURRENT_UA		((sdm439_current_device == XIAOMI_PINE) ? 2000000 : 3000000)
 #define TYPEC_DEFAULT_CURRENT_UA	900000
 #define TYPEC_MEDIUM_CURRENT_UA		1500000
-#define TYPEC_HIGH_CURRENT_UA		3000000
 #define SMBCHG_UPDATE_MS		1000
 #define DCIN_ICL_MIN_UA			100000
 #define DCIN_ICL_MAX_UA			1500000
@@ -479,6 +480,7 @@ struct smb_charger {
 	struct delayed_work	role_reversal_check;
 	struct delayed_work	cool_limit_work;
 	struct delayed_work 	arb_monitor_work;
+	struct delayed_work	adapter_limit_work;
 
 	struct alarm		lpd_recheck_timer;
 	struct alarm		moisture_protection_alarm;
@@ -620,6 +622,8 @@ struct smb_charger {
 	u32			headroom_mode;
 	bool			flash_init_done;
 	bool			flash_active;
+	bool			is_adapter_idn;
+
 	u32			irq_status;
 	unsigned long           recent_collapse_time;
 	bool		        hvdcp_disabled;

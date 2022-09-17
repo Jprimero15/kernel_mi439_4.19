@@ -37,12 +37,14 @@
 #include "qg-battery-profile.h"
 #include "qg-defs.h"
 
+#include <linux/sdm439_device.h>
 
-/* OLIVE ONLY FOR NOW */
-#define SUNWODA_ID_MAX 350000
-#define SUNWODA_ID_MIN 315000
-#define COSLIGHT_ID_MAX 107000
-#define COSLIGHT_ID_MIN 96000
+#define SUNWODA_ID_MAX ((sdm439_current_device == XIAOMI_PINE) ? 82000 : 350000)
+#define SUNWODA_ID_MIN ((sdm439_current_device == XIAOMI_PINE) ? 73500 : 315000)
+#define NVT_ID_MAX 44000
+#define NVT_ID_MIN 39000
+#define COSLIGHT_ID_MAX ((sdm439_current_device == XIAOMI_PINE) ? 54000 : 107000)
+#define COSLIGHT_ID_MIN ((sdm439_current_device == XIAOMI_PINE) ? 48000 : 96000)
 
 #define HOT_FVCOMP_4100MV 0x1D		/*JEITA_FVCOMP_HOT=(4390-4100)/10*/
 #define HOT_FVCOMP_4000MV 0x27
@@ -2235,7 +2237,7 @@ static int qg_psy_get_property(struct power_supply *psy,
 			pval->intval = (int)temp;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-		pval->intval = 5000000;
+		pval->intval = ((sdm439_current_device == XIAOMI_PINE) ? 4000000 : 5000000);
 		/*
 		rc = qg_get_nominal_capacity((int *)&temp, 250, true);
 		if (!rc)
@@ -3064,9 +3066,13 @@ static int qg_load_battery_profile(struct qpnp_qg *chip)
 		match = 1;
 		chip->batt_id = 1;
 		printk("SUNWODA match succ.\n");
-	} else if (chip->batt_id_ohm >= COSLIGHT_ID_MIN && chip->batt_id_ohm <= COSLIGHT_ID_MAX) {
+	} else if (sdm439_current_device == XIAOMI_PINE && (chip->batt_id_ohm >= NVT_ID_MIN && chip->batt_id_ohm <= NVT_ID_MAX)) {
 		match = 1;
 		chip->batt_id = 2;
+		printk("NVT match succ.\n");
+	} else if (chip->batt_id_ohm >= COSLIGHT_ID_MIN && chip->batt_id_ohm <= COSLIGHT_ID_MAX) {
+		match = 1;
+		chip->batt_id = (sdm439_current_device == XIAOMI_PINE) ? 3 : 2;
 		printk("COSLIGHT match succ.\n");
 	}
 
