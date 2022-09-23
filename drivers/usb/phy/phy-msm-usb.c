@@ -107,7 +107,11 @@ enum msm_usb_phy_type {
 	QUSB_ULPI_PHY,
 };
 
-#define IDEV_CHG_MAX	1500
+#ifdef CONFIG_MACH_XIAOMI_SDM439
+#define IDEV_CHG_MAX	900
+#else
+#define IDEV_CHG_MAX    1500
+#endif
 #define IUNIT		100
 #define IDEV_HVDCP_CHG_MAX	1800
 
@@ -3234,6 +3238,9 @@ static void msm_otg_set_vbus_state(int online)
 	 */
 	if (test_bit(B_SESS_VLD, &motg->inputs) && !motg->chg_detection) {
 		if ((get_psy_type(motg) == POWER_SUPPLY_TYPE_UNKNOWN) ||
+#ifdef CONFIG_MACH_XIAOMI_SDM439
+		    (get_psy_type(motg) == POWER_SUPPLY_TYPE_USB) ||
+#endif
 		    (get_psy_type(motg) == POWER_SUPPLY_TYPE_USB_FLOAT &&
 		     chg_detection_for_float_charger))
 			motg->chg_detection = true;
