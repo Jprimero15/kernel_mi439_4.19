@@ -58,3 +58,9 @@
 &pmi632_torch1 {
 	qcom,max-current = <120>;
 };
+
+&thermal_zones {
+	/delete-node/ pmi632-vbat-lvl0;
+	/delete-node/ pmi632-vbat-lvl1;
+	/delete-node/ pmi632-vbat-lvl2;
+};
