@@ -1357,6 +1357,7 @@ static int qpnp_lcdb_ldo_regulator_enable(struct regulator_dev *rdev)
 
 extern bool ilitek_gesture_flag;
 extern bool nvt_gesture_flag;
+extern bool fts_gesture_flag;
 
 static int qpnp_lcdb_ldo_regulator_disable(struct regulator_dev *rdev)
 {
@@ -1368,7 +1369,7 @@ static int qpnp_lcdb_ldo_regulator_disable(struct regulator_dev *rdev)
 
 	mutex_lock(&lcdb->lcdb_mutex);
 	if (sdm439_current_device == XIAOMI_OLIVES) {
-		if ((ilitek_gesture_flag != true) && (nvt_gesture_flag != true))
+		if ((ilitek_gesture_flag != true) && (nvt_gesture_flag != true) && (fts_gesture_flag != true))
 			rc = qpnp_lcdb_disable(lcdb);
 	} else {
 	                rc = qpnp_lcdb_disable(lcdb);
@@ -1461,7 +1462,7 @@ static int qpnp_lcdb_ncp_regulator_disable(struct regulator_dev *rdev)
 
 	mutex_lock(&lcdb->lcdb_mutex);
 	if (sdm439_current_device == XIAOMI_OLIVES) {
-		if ((ilitek_gesture_flag != true) && (nvt_gesture_flag != true))
+		if ((ilitek_gesture_flag != true) && (nvt_gesture_flag != true) && (fts_gesture_flag != true))
 			rc = qpnp_lcdb_disable(lcdb);
         } else {
                         rc = qpnp_lcdb_disable(lcdb);

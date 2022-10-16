@@ -31,6 +31,8 @@ extern struct ktd3137_chip *bkl_chip;
 #ifdef CONFIG_INPUT_TOUCHSCREEN_XIAOMI_OLIVE
 extern bool  is_ilitek_tp;
 extern void ilitek_call_resume_work(void);
+extern void lcd_call_tp_reset(int i);
+extern bool is_focal_tp;
 #endif
 
 #define DT_CMD_HDR 6
@@ -449,6 +451,31 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 				}
 			}
 
+		if(sdm439_current_device == XIAOMI_OLIVES) {
+			if (is_focal_tp) {
+				lcd_call_tp_reset(0);
+				gpio_set_value((ctrl_pdata->rst_gpio), pdata->panel_info.rst_seq[0]);
+				if (pdata->panel_info.rst_seq[1])
+					usleep_range((pinfo->rst_seq[1] * 1000), (pinfo->rst_seq[1] * 1000) + 10);
+				gpio_set_value((ctrl_pdata->rst_gpio), pdata->panel_info.rst_seq[2]);
+				if (pdata->panel_info.rst_seq[3])
+					usleep_range((pinfo->rst_seq[3] * 1000 - 5000), (pinfo->rst_seq[3] * 1000) + 10 - 5000);
+				lcd_call_tp_reset(1);
+				usleep_range(5000, 5010);
+				gpio_set_value((ctrl_pdata->rst_gpio), pdata->panel_info.rst_seq[4]);
+				if (pdata->panel_info.rst_seq[5])
+					usleep_range((pinfo->rst_seq[5] * 1000), (pinfo->rst_seq[5] * 1000) + 10);
+			}
+			if (!is_focal_tp) {
+				for (i = 0; i < pdata->panel_info.rst_seq_len; ++i) {
+					gpio_set_value((ctrl_pdata->rst_gpio),
+						pdata->panel_info.rst_seq[i]);
+					if (pdata->panel_info.rst_seq[++i])
+						usleep_range((pinfo->rst_seq[i] * 1000),
+						(pinfo->rst_seq[i] * 1000) + 10);
+				}
+			}
+		} else {
 			for (i = 0; i < pdata->panel_info.rst_seq_len; ++i) {
 				gpio_set_value((ctrl_pdata->rst_gpio),
 					pdata->panel_info.rst_seq[i]);
@@ -456,6 +483,7 @@ int mdss_dsi_panel_reset(struct mdss_panel_data *pdata, int enable)
 					usleep_range((pinfo->rst_seq[i] * 1000),
 					(pinfo->rst_seq[i] * 1000) + 10);
 			}
+		}
 
 #ifdef CONFIG_INPUT_TOUCHSCREEN_XIAOMI_OLIVE
 		if (sdm439_current_device == XIAOMI_OLIVES) {
