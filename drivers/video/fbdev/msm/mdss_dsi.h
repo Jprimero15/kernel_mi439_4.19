@@ -24,6 +24,8 @@ extern struct ktd3137_chip *bkl_chip;
 #ifdef CONFIG_INPUT_TOUCHSCREEN_XIAOMI_OLIVE
 extern bool  is_ilitek_tp;
 extern void ilitek_call_resume_work(void);
+extern void lcd_call_tp_reset(int i);
+extern bool  is_focal_tp;
 #endif
 
 #define MMSS_SERDES_BASE_PHY 0x04f01000 /* mmss (De)Serializer CFG */
