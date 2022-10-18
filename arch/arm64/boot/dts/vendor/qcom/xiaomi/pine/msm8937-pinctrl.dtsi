@@ -1,4 +1,6 @@
 &tlmm {
+	/delete-node/ spi6;
+
 		fm_pin {
 			fm_on: gpio_on {
 				mux {

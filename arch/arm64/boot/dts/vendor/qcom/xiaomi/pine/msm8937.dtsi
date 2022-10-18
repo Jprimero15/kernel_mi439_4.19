@@ -1,4 +1,12 @@
+/ {
+	aliases {
+		/delete-property/ spi6;
+	};
+};
+
 &soc {
+	/delete-node/ spi@7af6000;
+
 	qcom,wdt@b017000 {
 		qcom,bark-time = <15000>;
 	};

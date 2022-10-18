@@ -1,8 +1,8 @@
 &mtp_batterydata {
-	#include "../batterydata/Peony-GY-4000mah-51kohm.dtsi"
-	#include "../batterydata/Peony-NVT-4000mah-41kohm.dtsi"
-	#include "../batterydata/Peony-SWD-4000mah-78kohm.dtsi"
-	#include "../batterydata/Peony-Default-4000mah-78kohm.dtsi"
+	#include "batterydata/Peony-GY-4000mah-51kohm.dtsi"
+	#include "batterydata/Peony-NVT-4000mah-41kohm.dtsi"
+	#include "batterydata/Peony-SWD-4000mah-78kohm.dtsi"
+	#include "batterydata/Peony-Default-4000mah-78kohm.dtsi"
 };
 
 &thermal_zones {
