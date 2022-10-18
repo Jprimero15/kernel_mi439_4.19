@@ -1,10 +1,16 @@
 &spi3_cs0_sleep {
 	config {
+		/delete-property/ bias-disable;
 		output-high;
 	};
 };
 
 &tlmm {
+	/delete-node/ i2c_4;
+	/delete-node/ pmx_quat_mi2s;
+	/delete-node/ pmx_quat_mi2s_din;
+	/delete-node/ cdc-dmic-lines;
+
 		/*add fingerprint for C3I-224 by gaoge start*/
 		goodix_spi_active: goodix_spi_active{
 			mux {
@@ -54,15 +60,7 @@
 			};
 		};
 		/*add fingerprint for C3I-224 by gaoge end*/
-};
 
-&mdss_dsi_suspend {
-	config {
-		bias-pull-up;
-	};
-};
-
-&tlmm {
 		fm_pin {
 			fm_on: gpio_on {
 				mux {
@@ -84,9 +82,7 @@
 				};
 			};
 		};
-};
 
-&tlmm {
 		cam_sensor_aux_reset: cam_sensor_aux_reset {
 			/* RESET */
 			mux {
@@ -114,4 +110,11 @@
 				drive-strength = <2>; /* 2 MA */
 			};
 		};
+};
+
+&mdss_dsi_suspend {
+	config {
+		/delete-property/ bias-pull-down; 
+		bias-pull-up;
+	};
 };

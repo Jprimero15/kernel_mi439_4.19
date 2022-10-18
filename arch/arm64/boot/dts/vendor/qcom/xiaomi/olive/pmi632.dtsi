@@ -13,6 +13,10 @@
 &lcdb_ldo_vreg { regulator-min-microvolt = <6000000>; };
 &lcdb_ncp_vreg { regulator-min-microvolt = <6000000>; };
 
+&pmi632_lcdb {
+	/delete-property/ qcom,ttw-enable;
+};
+
 &pmi632_flash0 {
 	qcom,max-current = <1200>;
 };
