@@ -1,7 +1,7 @@
 &mtp_batterydata {
-	#include "../batterydata/Olive-SWD-5000mah-330kohm.dtsi"
-	#include "../batterydata/Olive-GY-5000mah-100kohm.dtsi"
-	#include "../batterydata/Olive-Default-5000mah-330kohm.dtsi"
+	#include "batterydata/Olive-SWD-5000mah-330kohm.dtsi"
+	#include "batterydata/Olive-GY-5000mah-100kohm.dtsi"
+	#include "batterydata/Olive-Default-5000mah-330kohm.dtsi"
 };
 
 &thermal_zones {
