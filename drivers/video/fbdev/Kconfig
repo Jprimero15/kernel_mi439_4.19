@@ -2353,3 +2353,9 @@ source "drivers/video/fbdev/omap/Kconfig"
 source "drivers/video/fbdev/omap2/Kconfig"
 source "drivers/video/fbdev/mmp/Kconfig"
 source "drivers/video/fbdev/msm/Kconfig"
+
+config LM3697_SUPPORT
+	tristate "TI LM3697"
+	default n
+	help
+	  Say y here to support TI backlight IC LM3697.
