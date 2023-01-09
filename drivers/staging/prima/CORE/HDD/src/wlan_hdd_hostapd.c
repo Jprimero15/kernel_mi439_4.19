@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -298,8 +299,6 @@ int __hdd_hostapd_stop (struct net_device *dev)
  clear_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
  adapter->dev->wireless_handlers = NULL;
 
-   if (!hdd_is_cli_iface_up(hdd_ctx))
-       sme_ScanFlushResult(hdd_ctx->hHal, 0);
 
    EXIT();
    return 0;
@@ -2042,8 +2041,8 @@ void hdd_check_for_unsafe_ch(hdd_adapter_t *phostapd_adapter,
 
     for (channelLoop = 0; channelLoop < unsafeChannelCount; channelLoop++)
     {
-        if ((unsafeChannelList[channelLoop] ==
-             phostapd_adapter->sessionCtx.ap.operatingChannel)) {
+        if (unsafeChannelList[channelLoop] ==
+             phostapd_adapter->sessionCtx.ap.operatingChannel) {
             if ((AUTO_CHANNEL_SELECT ==
                 phostapd_adapter->sessionCtx.ap.sapConfig.channel)
                 && (WLAN_HDD_SOFTAP == phostapd_adapter->device_mode)) {
@@ -2295,7 +2294,7 @@ void hdd_hostapd_ch_avoid_cb
 
            for (i = 0; i < unsafeChannelCount; i++)
            {
-               if ((pSapCtx->sap_sec_chan == unsafeChannelList[i]))
+               if (pSapCtx->sap_sec_chan == unsafeChannelList[i])
                {
                    /* Current SAP Secondary channel is un-safe channel */
                    VOS_TRACE( VOS_MODULE_ID_SAP, VOS_TRACE_LEVEL_ERROR,

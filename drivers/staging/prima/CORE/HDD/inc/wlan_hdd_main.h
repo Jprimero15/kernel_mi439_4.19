@@ -601,6 +601,7 @@ typedef struct WLAN_WAPI_KEY *pWLAN_WAPI_KEY;
 #define WPA_GET_LE16(a) ((u16) (((a)[1] << 8) | (a)[0]))
 #define WPA_GET_BE24(a) ((u32) ( (a[0] << 16) | (a[1] << 8) | a[2]))
 #define WLAN_EID_WAPI 68
+#define WLAN_ELEMID_RSNXE 244
 #define WAPI_PSK_AKM_SUITE  0x02721400
 #define WAPI_CERT_AKM_SUITE 0x01721400
 
@@ -2142,8 +2143,19 @@ hdd_remain_on_chan_ctx_t *hdd_get_remain_on_channel_ctx(hdd_context_t *pHddCtx);
 VOS_STATUS wlan_hdd_handle_dfs_chan_scan(hdd_context_t *pHddCtx,
                                    tANI_U8 dfsScanMode);
 
+#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 v_U8_t hdd_is_fw_logging_enabled(void);
 v_U8_t hdd_is_fw_ev_logging_enabled(void);
+#else
+static inline v_U8_t hdd_is_fw_logging_enabled(void)
+{
+	return (FALSE);
+}
+static inline v_U8_t hdd_is_fw_ev_logging_enabled(void)
+{
+	return (FALSE);
+}
+#endif
 
 #define HDD_STA_ID_HASH_MULTIPLIER 2
 

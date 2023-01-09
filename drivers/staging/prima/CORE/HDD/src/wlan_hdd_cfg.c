@@ -4069,8 +4069,14 @@ REG_VARIABLE( CFG_EXTSCAN_ENABLE, WLAN_PARAM_Integer,
                VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
                CFG_SW_PTA_ENABLE_DEFAULT,
                CFG_SW_PTA_ENABLE_MIN,
-               CFG_SW_PTA_ENABLE_MAX)
+               CFG_SW_PTA_ENABLE_MAX),
 #endif
+  REG_VARIABLE(CFG_PERIODIC_ROAM_SCAN_ENABLED, WLAN_PARAM_Integer,
+              hdd_config_t, isPeriodicRoamScanEnabled,
+              VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+              CFG_PERIODIC_ROAM_SCAN_ENABLED_DEFAULT,
+              CFG_PERIODIC_ROAM_SCAN_ENABLED_MIN,
+              CFG_PERIODIC_ROAM_SCAN_ENABLED_MAX)
 };
 
 /*
@@ -4130,8 +4136,8 @@ static char *i_trim(char *str)
 
    /* Find the first non white-space*/
    for (ptr = str; i_isspace(*ptr); ptr++);
-      if (*ptr == '\0')
-         return str;
+   if (*ptr == '\0')
+      return str;
 
    /* This is the new start of the string*/
    str = ptr;
@@ -4139,8 +4145,8 @@ static char *i_trim(char *str)
    /* Find the last non white-space */
    ptr += strlen(ptr) - 1;
    for (; ptr != str && i_isspace(*ptr); ptr--);
-      /* Null terminate the following character */
-      ptr[1] = '\0';
+   /* Null terminate the following character */
+   ptr[1] = '\0';
 
    return str;
 }
@@ -4152,133 +4158,6 @@ typedef struct
    char *name;
    char *value;
 }tCfgIniEntry;
-
-
-/* convert string to 6 bytes mac address
- * 00AA00BB00CC -> 0x00 0xAA 0x00 0xBB 0x00 0xCC
- */
-static void update_mac_from_string(hdd_context_t *pHddCtx, tCfgIniEntry *macTable, int num)
-{
-   int i = 0, j = 0, res = 0;
-   char *candidate = NULL;
-   v_MACADDR_t macaddr[VOS_MAX_CONCURRENCY_PERSONA];
-
-   memset(macaddr, 0, sizeof(macaddr));
-
-   for (i = 0; i < num; i++)
-   {
-      candidate = macTable[i].value;
-      for (j = 0; j < VOS_MAC_ADDR_SIZE; j++) {
-         res = hex2bin(&macaddr[i].bytes[j], &candidate[(j<<1)], 1);
-         if (res < 0)
-            break;
-      }
-      if (res == 0 && !vos_is_macaddr_zero(&macaddr[i])) {
-         vos_mem_copy((v_U8_t *)&pHddCtx->cfg_ini->intfMacAddr[i].bytes[0],
-                      (v_U8_t *)&macaddr[i].bytes[0], VOS_MAC_ADDR_SIZE);
-      }
-   }
-}
-
-/*
- * This function tries to update mac address from cfg file.
- * It overwrites the MAC address if config file exist.
- */
-VOS_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
-{
-   int status, i = 0, j = 0;
-   char * buf;
-   const struct firmware *fw = NULL;
-   const char prefix[] = "Intf";
-   const char suffix[] = "MacAddress";
-   tCfgIniEntry macTable[VOS_MAX_CONCURRENCY_PERSONA];
-   VOS_STATUS vos_status = VOS_STATUS_SUCCESS;
-
-   // make sure all pointers in macTable are NULL, so an early jump to config_exit will not crash
-   memset(macTable, 0, sizeof(macTable));
-
-   status = request_firmware(&fw, WLAN_MAC_FILE, pHddCtx->parent_dev);
-
-   if (status)
-   {
-      hddLog(VOS_TRACE_LEVEL_WARN, "%s: request_firmware failed %d",
-             __func__, status);
-      return VOS_STATUS_E_FAILURE;
-   }
-   if (fw == NULL || fw->data == NULL || fw->size < (VOS_MAX_CONCURRENCY_PERSONA * NV_FIELD_MAC_ADDR_SIZE))
-   {
-      hddLog(VOS_TRACE_LEVEL_FATAL, "%s: invalid firmware", __func__);
-      release_firmware(fw);
-      return VOS_STATUS_E_INVAL;
-   }
-
-   /* data format:
-    * 00AA00BB00CA00AA00BB00CB00AA00BB00CC00AA00BB00CD
-    */
-
-   for (i = 0; i < VOS_MAX_CONCURRENCY_PERSONA; i++)
-   {
-      int lenPersona = snprintf(NULL, 0, "%d", i);
-
-      char *persona = (char*)vos_mem_vmalloc(lenPersona + 1);
-      if (NULL == persona) {
-         hddLog(VOS_TRACE_LEVEL_FATAL, "%s: kmalloc failure", __func__);
-         vos_status = VOS_STATUS_E_FAILURE;
-         goto config_exit;
-      }
-
-      macTable[i].name = (char*)vos_mem_vmalloc((sizeof(prefix) - 1) + lenPersona + (sizeof(suffix) - 1) + 1);
-      if (NULL == macTable[i].name) {
-         hddLog(VOS_TRACE_LEVEL_FATAL, "%s: kmalloc failure", __func__);
-         vos_status = VOS_STATUS_E_FAILURE;
-         vos_mem_vfree(persona);
-         goto config_exit;
-      }
-
-      macTable[i].value = (char*)vos_mem_vmalloc(NV_FIELD_MAC_ADDR_SIZE * 2 + 1);
-      if (NULL == macTable[i].value) {
-         hddLog(VOS_TRACE_LEVEL_FATAL, "%s: kmalloc failure", __func__);
-         vos_status = VOS_STATUS_E_FAILURE;
-         vos_mem_vfree(persona);
-         goto config_exit;
-      }
-
-      sprintf(persona, "%d", i);
-
-      strcpy(macTable[i].name, prefix);
-      strcat(macTable[i].name, persona);
-      strcat(macTable[i].name, suffix);
-
-      buf = macTable[i].value;
-      for (j = 0; j < NV_FIELD_MAC_ADDR_SIZE; j++)
-      {
-         buf += sprintf(buf, "%02X", fw->data[NV_FIELD_MAC_ADDR_SIZE * i + j]);
-      }
-
-      vos_mem_vfree(persona);
-   }
-
-   if (i <= VOS_MAX_CONCURRENCY_PERSONA) {
-      hddLog(VOS_TRACE_LEVEL_INFO, "%s: %d MAC addresses provided", __func__, i);
-   }
-   else {
-      hddLog(VOS_TRACE_LEVEL_ERROR, "%s: invalid number of MAC address provided, nMac = %d",
-             __func__, i);
-      vos_status = VOS_STATUS_E_INVAL;
-      goto config_exit;
-   }
-
-   update_mac_from_string(pHddCtx, &macTable[0], i);
-
-config_exit:
-   for(i = 0; i < VOS_MAX_CONCURRENCY_PERSONA; i++)
-   {
-      vos_mem_vfree(macTable[i].name);
-      vos_mem_vfree(macTable[i].value);
-   }
-   release_firmware(fw);
-   return vos_status;
-}
 
 static VOS_STATUS hdd_apply_cfg_ini( hdd_context_t * pHddCtx,
     tCfgIniEntry* iniTable, unsigned long entries);
@@ -4910,6 +4789,9 @@ static void print_hdd_cfg(hdd_context_t *pHddCtx)
             "Name = [%s] Value = [%s] ",
             CFG_ENABLE_DEFAULT_SAP,
             pHddCtx->cfg_ini->enabledefaultSAP);
+    VOS_TRACE(VOS_MODULE_ID_HDD, VOS_TRACE_LEVEL_INFO_HIGH,
+            "Name = [gPeriodicRoamScanEnabled] Value = [%u] ",
+            pHddCtx->cfg_ini->isPeriodicRoamScanEnabled);
     hdd_cfg_print_sae(pHddCtx);
     hdd_cfg_print_sae_sap(pHddCtx);
     hdd_cfg_print_sw_pta(pHddCtx);
@@ -5824,6 +5706,10 @@ v_BOOL_t hdd_update_config_dat( hdd_context_t *pHddCtx )
 
     if (ccmCfgSetInt(pHddCtx->hHal, WNI_CFG_MCAST_BCAST_FILTER_SETTING, pConfig->mcastBcastFilterSetting,
                      NULL, eANI_BOOLEAN_FALSE)==eHAL_STATUS_FAILURE)
+     {
+        fStatus = FALSE;
+        hddLog(LOGE,"Failure: Could not pass on WNI_CFG_MCAST_BCAST_FILTER_SETTING configuration info to CCM");
+     }
 #endif
 
      if (ccmCfgSetInt(pHddCtx->hHal, WNI_CFG_SINGLE_TID_RC, pConfig->bSingleTidRc,
@@ -6975,6 +6861,8 @@ VOS_STATUS hdd_set_sme_config( hdd_context_t *pHddCtx )
                         pHddCtx->cfg_ini->edca_bk_aifs;
    smeConfig->csrConfig.edca_be_aifs =
                         pHddCtx->cfg_ini->edca_be_aifs;
+   smeConfig->csrConfig.isPeriodicRoamScanEnabled =
+                        pHddCtx->cfg_ini->isPeriodicRoamScanEnabled;
 
    smeConfig->csrConfig.sta_auth_retries_for_code17 =
                         pHddCtx->cfg_ini->sta_auth_retries_for_code17;
