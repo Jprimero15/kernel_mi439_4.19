@@ -13,13 +13,12 @@
 
 /dts-v1/;
 
-#include "qcom-dts/sdm439.dtsi"
-#include "qcom-dts/sdm439-mtp.dtsi"
-#include "pine/base-mtp-pine.dtsi"
+#include "msm8937-interposer-sdm439.dtsi"
+#include "xiaomi/pine/base-pine.dtsi"
 
 / {
-	model = "Qualcomm Technologies, Inc. SDM439 MTP";
-	compatible = "qcom,sdm439";
+	model = "Qualcomm Technologies, Inc. MSM8953 + PMI632 SOC";
+	compatible = "qcom,msm8953";
 	qcom,pmic-id = <0x010016 0x25 0x0 0x0>;
 	qcom.pmic-name = "PMI632";
 };

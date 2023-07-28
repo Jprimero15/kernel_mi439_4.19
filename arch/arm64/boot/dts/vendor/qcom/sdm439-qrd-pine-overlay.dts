@@ -15,10 +15,10 @@
 /dts-v1/;
 /plugin/;
 
-#include "qcom-dts/sdm439-qrd.dtsi"
-#include "olive/overlay-olive.dtsi"
+#include "sdm439-qrd.dtsi"
+#include "xiaomi/pine/overlay-pine.dtsi"
 
 / {
-	model = "Olive QRD";
-	qcom,board-id = <0xb 8>;
+	model = "PINE QRD";
+	qcom,board-id = <0xb 2>;
 };

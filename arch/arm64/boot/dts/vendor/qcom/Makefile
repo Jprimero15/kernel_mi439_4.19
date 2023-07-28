@@ -1,13 +1,17 @@
-# dtb-$(CONFIG_ARCH_SDM439) += 
-# dtb-$(CONFIG_ARCH_MSM8917) +=
-# dtb-$(CONFIG_ARCH_SDM429) += 
-
-ifeq ($(CONFIG_MACH_XIAOMI_SDM439),y)
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
-subdir-y += xiaomi
-endif # CONFIG_BUILD_ARM64_DT_OVERLAY
-endif # CONFIG_MACH_XIAOMI_SDM439
+
+dtbo-$(CONFIG_MACH_XIAOMI_SDM439) += \
+	sdm439-qrd-olive-overlay.dtbo \
+	sdm439-qrd-pine-overlay.dtbo
+
+sdm439-qrd-olive-overlay.dtbo-base := sdm439-olive.dtb \
+        msm8937-interposer-sdm439-olive.dtb
+
+sdm439-qrd-pine-overlay.dtbo-base := sdm439-pine.dtb \
+	msm8937-interposer-sdm439-pine.dtb
+
+endif
 
 always		:= $(dtb-y)
-subdir-y	+= $(dts-dirs)
+subdir-y	:= $(dts-dirs)
 clean-files    := *.dtb *.dtbo
