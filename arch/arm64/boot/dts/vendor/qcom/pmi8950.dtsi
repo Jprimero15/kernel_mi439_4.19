@@ -10,9 +10,10 @@
  * GNU General Public License for more details.
  */
 
-#include <dt-bindings/msm/power-on.h>
+#include <dt-bindings/input/qcom,qpnp-power-on.h>
+#include <dt-bindings/iio/qcom,spmi-vadc.h>
+#include <dt-bindings/interrupt-controller/irq.h>
 #include <dt-bindings/spmi/spmi.h>
-#include <dt-bindings/interrupt-controller/arm-gic.h>
 
 &spmi_bus {
 	qcom,pmi8950@2 {
@@ -31,7 +32,7 @@
 			reg = <0x800 0x100>;
 			qcom,secondary-pon-reset;
 			qcom,hard-reset-poweroff-type =
-				<PON_POWER_OFF_SHUTDOWN>;
+				<PON_POWER_OFF_TYPE_SHUTDOWN>;
 
 			pon_perph_reg: qcom,pon_perph_reg {
 				regulator-name = "pon_spare_reg";
@@ -41,104 +42,73 @@
 		};
 
 		pmi8950_vadc: vadc@3100 {
-			compatible = "qcom,qpnp-vadc";
+			compatible = "qcom,spmi-vadc";
 			reg = <0x3100 0x100>;
 			#address-cells = <1>;
 			#size-cells = <0>;
 			interrupts = <0x2 0x31 0x0 IRQ_TYPE_EDGE_RISING>;
-			interrupt-names = "eoc-int-en-set";
-			qcom,adc-bit-resolution = <15>;
-			qcom,adc-vdd-reference = <1800>;
-			qcom,vadc-poll-eoc;
 			#thermal-sensor-cells = <1>;
+			#io-channel-cells = <1>;
+			io-channel-ranges;
 
-			chan@0 {
+			usbin {
+				reg = <VADC_USBIN>;
 				label = "usbin";
-				reg = <0>;
-				qcom,decimation = <0>;
-				qcom,pre-div-channel-scaling = <4>;
-				qcom,calibration-type = "absolute";
-				qcom,scale-function = <0>;
-				qcom,hw-settle-time = <0>;
-				qcom,fast-avg-setup = <0>;
+				qcom,pre-scaling = <1 10>;
 			};
 
-			chan@1 {
+			dcin {
+				reg = <VADC_DCIN>;
 				label = "dcin";
-				reg = <1>;
-				qcom,decimation = <0>;
-				qcom,pre-div-channel-scaling = <4>;
-				qcom,calibration-type = "absolute";
-				qcom,scale-function = <0>;
-				qcom,hw-settle-time = <0>;
-				qcom,fast-avg-setup = <0>;
+				qcom,pre-scaling = <1 10>;
 			};
 
-			chan@3 {
+			vchg_sns {
+				reg = <VADC_VCHG_SNS_LEGACY>;
 				label = "vchg_sns";
-				reg = <3>;
-				qcom,decimation = <0>;
-				qcom,pre-div-channel-scaling = <1>;
-				qcom,calibration-type = "absolute";
-				qcom,scale-function = <0>;
-				qcom,hw-settle-time = <0>;
-				qcom,fast-avg-setup = <0>;
+				qcom,pre-scaling = <1 3>;
 			};
 
-			chan@9 {
+			ref_625mv {
+				reg = <VADC_REF_625MV>;
 				label = "ref_625mv";
-				reg = <9>;
-				qcom,decimation = <0>;
-				qcom,pre-div-channel-scaling = <0>;
-				qcom,calibration-type = "absolute";
-				qcom,scale-function = <0>;
-				qcom,hw-settle-time = <0>;
-				qcom,fast-avg-setup = <0>;
+				qcom,pre-scaling = <1 1>;
 			};
 
-			chan@a {
+			ref_1250v {
+				reg = <VADC_REF_1250MV>;
 				label = "ref_1250v";
-				reg = <0xa>;
-				qcom,decimation = <0>;
-				qcom,pre-div-channel-scaling = <0>;
-				qcom,calibration-type = "absolute";
-				qcom,scale-function = <0>;
-				qcom,hw-settle-time = <0>;
-				qcom,fast-avg-setup = <0>;
+				qcom,pre-scaling = <1 1>;
+			};
+			
+			ref_vdd {
+				reg = <VADC_VDD_VADC>;
+				label = "ref_vdd";
+				qcom,pre-scaling = <1 1>;
 			};
 
-			chan@d {
+			ref_gnd {
+				reg = <VADC_GND_REF>;
+				label = "ref_gnd";
+				qcom,pre-scaling = <1 1>;
+			};
+
+			chg_temp {
+				reg = <VADC_CHG_TEMP_LEGACY>;
 				label = "chg_temp";
-				reg = <0xd>;
-				qcom,decimation = <0>;
-				qcom,pre-div-channel-scaling = <0>;
-				qcom,calibration-type = "absolute";
-				qcom,scale-function = <16>;
-				qcom,hw-settle-time = <0>;
-				qcom,fast-avg-setup = <0>;
-				qcom,vadc-thermal-node;
+				qcom,pre-scaling = <1 1>;
 			};
 
-			chan@43 {
+			usb_dp {
+				reg = <VADC_USB_DP>;
 				label = "usb_dp";
-				reg = <0x43>;
-				qcom,decimation = <0>;
-				qcom,pre-div-channel-scaling = <1>;
-				qcom,calibration-type = "absolute";
-				qcom,scale-function = <0>;
-				qcom,hw-settle-time = <0>;
-				qcom,fast-avg-setup = <0>;
+				qcom,pre-scaling = <1 3>;
 			};
 
-			chan@44 {
+			usb_dm {
+				reg = <VADC_USB_DM>;
 				label = "usb_dm";
-				reg = <0x44>;
-				qcom,decimation = <0>;
-				qcom,pre-div-channel-scaling = <1>;
-				qcom,calibration-type = "absolute";
-				qcom,scale-function = <0>;
-				qcom,hw-settle-time = <0>;
-				qcom,fast-avg-setup = <0>;
+				qcom,pre-scaling = <1 3>;
 			};
 		};
 
@@ -173,6 +143,7 @@
 			compatible = "qcom,qpnp-smbcharger";
 			#address-cells = <1>;
 			#size-cells = <1>;
+			#cooling-cells = <2>;
 
 			qcom,iterm-ma = <100>;
 			qcom,float-voltage-mv = <4200>;
@@ -189,6 +160,9 @@
 			qcom,aicl-rerun-period-s = <180>;
 			qcom,autoadjust-vfloat;
 			dpdm-supply = <&qusb_phy>;
+
+			io-channels = <&pmi8950_vadc VADC_VCHG_SNS_LEGACY>;
+			io-channel-names = "vchg_sns";
 
 			qcom,chgr@1000 {
 				reg = <0x1000 0x100>;
@@ -356,7 +330,7 @@
 			};
 		};
 
-		bcl@4200 {
+		bcl_sensor: bcl@4200 {
 			compatible = "qcom,msm-bcl";
 			reg = <0x4200 0xFF 0x88E 0x2>;
 			reg-names = "fg_user_adc", "pon_spare";
@@ -375,6 +349,7 @@
 			qcom,ibat-offset-denominator = <1>;
 			qcom,ibat-polling-delay-ms = <100>;
 			qcom,inhibit-derating-ua = <550000>;
+			#thermal-sensor-cells = <1>;
 		};
 
 		qcom,leds@a100 {
@@ -392,12 +367,11 @@
 
 		pmi8950_pwm: pwm@b000 {
 			status = "disabled";
-			compatible = "qcom,qpnp-pwm";
+			compatible = "qcom,pwm-lpg";
 			reg = <0xb000 0x100>;
-			reg-names = "qpnp-lpg-channel-base";
-			qcom,channel-id = <0>;
-			qcom,supported-sizes = <6>, <9>;
+			reg-names = "lpg-base";
 			#pwm-cells = <2>;
+			qcom,num-lpg-channels = <1>;
 		};
 
 		labibb: qpnp-labibb-regulator {
@@ -475,6 +449,24 @@
 		};
 
 		wled: qcom,leds@d800 {
+#ifdef CONFIG_BACKLIGHT_QCOM_WLED
+			compatible = "qcom,pmi8950-wled";
+			reg = <0xd800 0x100>,
+				<0xd900 0x100>;
+			reg-names = "wled-ctrl-base",
+					"wled-sink-base";
+			interrupts = <0x3 0xd8 0x2 IRQ_TYPE_EDGE_RISING>;
+			interrupt-names = "short";
+
+			label = "panel0-backlight";
+			qcom,current-boost-limit = <980>;	// qcom,ilim-ma
+			qcom,current-limit-microamp = <20000>;	// qcom,fs-curr-ua
+			qcom,ovp-millivolt = <29500>;		// qcom,ovp-mv
+			qcom,switching-freq = <800>;		// qcom,switch-freq-khz
+			qcom,external-pfet;			// qcom,en-ext-pfet-sc-pro;
+			qcom,enabled-strings = <0 1>;
+			status = "okay";
+#else
 			compatible = "qcom,qpnp-wled";
 			reg = <0xd800 0x100>,
 				<0xd900 0x100>,
@@ -505,6 +497,7 @@
 			qcom,en-ext-pfet-sc-pro;
 			qcom,pmic-revid = <&pmi8950_revid>;
 			qcom,cons-sync-write-delay-us = <1000>;
+#endif
 		};
 
 		flash_led: qcom,leds@d300 {
@@ -529,6 +522,8 @@
 			qcom,headroom-sense-ch0-enabled;
 			qcom,headroom-sense-ch1-enabled;
 			qcom,pmic-revid = <&pmi8950_revid>;
+			io-channels = <&pmi8950_vadc VADC_SPARE2>;
+			io-channel-names = "die-temp";
 
 			pmi8950_flash0: qcom,flash_0 {
 				label = "flash";
@@ -617,13 +612,60 @@
 	chg-temp-adc {
 		polling-delay-passive = <0>;
 		polling-delay = <0>;
-		thermal-sensors = <&pmi8950_vadc 0xd>;
+		thermal-sensors = <&pmi8950_vadc VADC_CHG_TEMP_LEGACY>;
 		thermal-governor = "user_space";
 
 		trips {
 			active-config0 {
 				temperature = <65000>;
 				hysteresis = <1000>;
+				type = "passive";
+			};
+		};
+	};
+
+	ibat-high {
+		polling-delay-passive = <100>;
+		polling-delay = <0>;
+		thermal-governor = "step_wise";
+		thermal-sensors = <&bcl_sensor 0>;
+
+		trips {
+			ibat-high {
+				temperature = <4200>;
+				hysteresis = <200>;
+				type = "passive";
+			};
+		};
+	};
+
+	vbat_low {
+		polling-delay-passive = <100>;
+		polling-delay = <0>;
+		thermal-governor = "low_limits_cap";
+		thermal-sensors = <&bcl_sensor 1>;
+		tracks-low;
+
+		trips {
+			vbat-low {
+				temperature = <3500>;
+				hysteresis = <100>;
+				type = "passive";
+			};
+		};
+	};
+
+	soc {
+		polling-delay-passive = <100>;
+		polling-delay = <0>;
+		thermal-governor = "low_limits_cap";
+		thermal-sensors = <&bcl_sensor 2>;
+		tracks-low;
+
+		trips {
+			low_soc: low-soc {
+				temperature = <10>;
+				hysteresis = <0>;
 				type = "passive";
 			};
 		};

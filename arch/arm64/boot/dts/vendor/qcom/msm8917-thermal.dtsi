@@ -1,5 +1,30 @@
 #include <dt-bindings/thermal/thermal.h>
 
+&apsscc {
+	qcom,cpu-isolation {
+		compatible = "qcom,cpu-isolate";
+		cpu0_isolate: cpu0-isolate {
+			qcom,cpu = <&CPU0>;
+			#cooling-cells = <2>;
+		};
+
+		cpu1_isolate: cpu1-isolate {
+			qcom,cpu = <&CPU1>;
+			#cooling-cells = <2>;
+		};
+
+		cpu2_isolate: cpu2-isolate {
+			qcom,cpu = <&CPU2>;
+			#cooling-cells = <2>;
+		};
+
+		cpu3_isolate: cpu3-isolate {
+			qcom,cpu = <&CPU3>;
+			#cooling-cells = <2>;
+		};
+	};
+};
+
 &soc {
 	qmi-tmd-devices {
 		compatible = "qcom,qmi-cooling-devices";
@@ -228,12 +253,12 @@
 				type = "passive";
 			};
 		};
+
 		cooling-maps {
 			cpu0_cdev {
 				trip = <&apc1_cpu0_trip>;
 				cooling-device =
-					<&CPU0 THERMAL_MAX_LIMIT
-						THERMAL_MAX_LIMIT>;
+					<&cpu0_isolate 1 1>;
 			};
 		};
 	};
@@ -250,12 +275,12 @@
 				type = "passive";
 			};
 		};
+
 		cooling-maps {
 			cpu1_cdev {
 				trip = <&apc1_cpu1_trip>;
 				cooling-device =
-					<&CPU1 THERMAL_MAX_LIMIT
-						THERMAL_MAX_LIMIT>;
+					<&cpu1_isolate 1 1>;
 			};
 		};
 	};
@@ -272,12 +297,12 @@
 				type = "passive";
 			};
 		};
+
 		cooling-maps {
 			cpu2_cdev {
 				trip = <&apc1_cpu2_trip>;
 				cooling-device =
-					<&CPU2 THERMAL_MAX_LIMIT
-						THERMAL_MAX_LIMIT>;
+					<&cpu2_isolate 1 1>;
 			};
 		};
 	};
@@ -294,12 +319,12 @@
 				type = "passive";
 			};
 		};
+
 		cooling-maps {
 			cpu3_cdev {
 				trip = <&apc1_cpu3_trip>;
 				cooling-device =
-					<&CPU3 THERMAL_MAX_LIMIT
-						THERMAL_MAX_LIMIT>;
+					<&cpu3_isolate 1 1>;
 			};
 		};
 	};
