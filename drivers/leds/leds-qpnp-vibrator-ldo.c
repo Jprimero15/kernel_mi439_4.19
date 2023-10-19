@@ -364,7 +364,7 @@ static ssize_t qpnp_vib_store_vmax(struct device *dev,
 	mutex_lock(&chip->lock);
 	chip->vmax_uV = data;
 	mutex_unlock(&chip->lock);
-	return count;
+	return ret;
 }
 
 static struct device_attribute qpnp_vib_attrs[] = {
