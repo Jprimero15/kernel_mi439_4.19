@@ -22,11 +22,7 @@ Required properties:
 
 - compatible: must be "ramoops"
 
-- memory-region: region of memory that is preserved between reboots
-- alt-memory-region: region of memory that is preserved between reboots
-             which contains an AES encrypted copy of the persistent
-             RAM storage.
-
+- reg: region of memory that is preserved between reboots
 
 
 Optional properties:
