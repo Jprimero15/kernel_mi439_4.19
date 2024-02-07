@@ -42,7 +42,6 @@
 			qcom,bus-slave = <MSM_BUS_SLAVE_VENUS_CFG>;
 			qcom,mode = "performance";
 			qcom,bus-range-kbps = <1000 1000>;
-			qcom,msm-bus,name = "vidc_bus";
 		};
 
 		venus_bus_ddr {
@@ -52,7 +51,6 @@
 			qcom,bus-slave = <MSM_BUS_SLAVE_EBI_CH0>;
 			qcom,mode = "venus-ddr";
 			qcom,bus-range-kbps = <1000 6533000>;
-			qcom,msm-bus,name = "vidc_bus";
 		};
 
 		arm9_bus_ddr {
@@ -62,7 +60,6 @@
 			qcom,bus-slave = <MSM_BUS_SLAVE_EBI_CH0>;
 			qcom,mode = "performance";
 			qcom,bus-range-kbps = <1000 1000>;
-			qcom,msm-bus,name = "vidc_bus";
 		};
 
 		/* MMUs */
@@ -159,7 +156,6 @@
 			qcom,bus-slave = <MSM_BUS_SLAVE_VENUS_CFG>;
 			qcom,mode = "performance";
 			qcom,bus-range-kbps = <1000 1000>;
-			qcom,msm-bus,name = "vidc_bus";
 		};
 
 		venus_bus_ddr {
@@ -169,7 +165,6 @@
 			qcom,bus-slave = <MSM_BUS_SLAVE_EBI_CH0>;
 			qcom,mode = "venus-ddr";
 			qcom,bus-range-kbps = <1000 6533000>;
-			qcom,msm-bus,name = "vidc_bus";
 		};
 
 		arm9_bus_ddr {
@@ -179,7 +174,6 @@
 			qcom,bus-slave = <MSM_BUS_SLAVE_EBI_CH0>;
 			qcom,mode = "performance";
 			qcom,bus-range-kbps = <1000 1000>;
-			qcom,msm-bus,name = "vidc_bus";
 		};
 
 		/* MMUs */
